@@ -9,10 +9,10 @@ import { streamToBuffer, StreamToBuffer } from "../helpers/file/StreamToBuffer"
 import { GlacierSingleUpload } from "../services/GlacierUploader/GlacierSingleUpload"
 import { GlacierMultipartUpload } from "../services/GlacierUploader/GlacierMultipartUpload"
 import batchProcess, { BatchProcessor } from "../helpers/concurrency/BatchProcessor"
-import { Uploader } from "../app/uploader/Uploader"
+import { Uploader, IUploader } from "../app/uploader/Uploader"
 import { Config } from "../app/config/Config"
 
-export default function bootstrap() {
+export default function bootstrap(): IUploader {
   const container = new inversify.Container()
 
   // App Config

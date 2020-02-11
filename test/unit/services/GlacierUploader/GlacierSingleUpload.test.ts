@@ -63,6 +63,7 @@ describe("GlacierSingleUpload", () => {
     const errorMessage = "A Glacier upload error occurred"
     const buffer = Buffer.alloc(123, "binary")
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     AWSMock.mock("Glacier", "uploadArchive", (_params: any, cb: Function) => cb(new Error(errorMessage)))
 
     const glacier = new AWS.Glacier()
