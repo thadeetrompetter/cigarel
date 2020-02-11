@@ -22,8 +22,8 @@ export interface UploadJob {
 }
 
 export interface UploadPart {
-  start: number,
-  end: number,
+  start: number
+  end: number
   stream: ReadStream
 }
 

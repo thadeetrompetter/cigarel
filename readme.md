@@ -27,7 +27,7 @@ container.bind<inversify.interfaces.Newable<GlacierSingleUpload>>(TYPES.GlacierS
 container.bind<inversify.interfaces.Newable<GlacierMultipartUpload>>(TYPES.GlacierMultipartStrategy)  .toConstructor<GlacierSingleUpload>(GlacierSingleUpload)
 ```
 ### Quality
-* [ ] Code Linting
+* [x] Code Linting
 * [ ] Integration tests
 
 ### Deliverable

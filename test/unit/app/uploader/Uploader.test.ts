@@ -101,6 +101,7 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
       .returns(() => fileSize)
       .verifiable(Times.once())
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fileInfo.setup((f: any) => f.then).returns(() => undefined)
 
     fileHelper.setup(f => f.read(filePath))
@@ -121,6 +122,7 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
       .returns(() => fileSize)
       .verifiable(Times.once())
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fileInfo.setup((f: any) => f.then).returns(() => undefined)
 
     fileHelper.setup(f => f.read(filePath))
@@ -138,7 +140,7 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
     fileSize: number,
     archiveId: string,
     uploadStrategy: IGlacierUploadStrategy,
-  ) {
+  ): void {
     config.setup(c => c.chunkSize)
       .returns(() => chunkSize)
       .verifiable(Times.once())
@@ -147,6 +149,7 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
       .returns(() => fileSize)
       .verifiable(Times.once())
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fileInfo.setup((f: any) => f.then).returns(() => undefined)
 
     fileHelper.setup(f => f.read(filePath))
@@ -165,6 +168,7 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
       .returns(() => archiveId)
       .verifiable(Times.once())
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     uploadResult.setup((f: any) => f.then).returns(() => undefined)
 
     uploadService.setup(u => u.setStrategy(uploadStrategy))
