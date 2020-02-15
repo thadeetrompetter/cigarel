@@ -19,10 +19,7 @@ module.exports = {
         "@typescript-eslint"
     ],
     "rules": {
-        "indent": [
-            "error",
-            2
-        ],
+        "indent": "off",
         "linebreak-style": [
             "error",
             "unix"
@@ -35,6 +32,7 @@ module.exports = {
             "error",
             "never"
         ],
+        "@typescript-eslint/indent": "off",
         "@typescript-eslint/adjacent-overload-signatures": "error",
         "@typescript-eslint/ban-ts-ignore": "error",
         "@typescript-eslint/ban-types": "error",

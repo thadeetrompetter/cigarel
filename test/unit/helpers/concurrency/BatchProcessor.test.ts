@@ -14,6 +14,7 @@ describe("BatchProcessor", () => {
     { foo: 2 },
     { foo: 3 }
   ]
+
   it("will process a list of tasks in batches", async () => {
     const mockFunc = jest.fn()
       .mockResolvedValueOnce({ bar: 1 })
@@ -22,14 +23,24 @@ describe("BatchProcessor", () => {
 
     const processFn = async (item: ItemInput): Promise<ItemOutput> => mockFunc(item)
 
-    const result = batchProcess<ItemInput, ItemOutput>(items, 1, processFn)
-
-    await expect(result)
+    await expect(batchProcess<ItemInput, ItemOutput>(items, 1, processFn))
       .resolves
-      .toEqual([
-        { bar: 1 },
-        { bar: 2 },
-        { bar: 3 }
-      ])
+      .not
+      .toThrow()
+
+    expect(mockFunc.mock.calls.length).toBe(3)
+  })
+
+  it("will throw an error if any task did not complete within n retries", async () => {
+    const mockFunc = jest.fn()
+      .mockRejectedValue(new Error("no success"))
+
+    const processFn = async (item: ItemInput): Promise<ItemOutput> => mockFunc(item)
+
+    await expect(batchProcess<ItemInput, ItemOutput>(items, 1, processFn))
+      .rejects
+      .toThrow()
+
+    expect(mockFunc.mock.calls.length).toBe(15)
   })
 })
