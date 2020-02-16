@@ -2,27 +2,27 @@ import { queue, retry } from "async"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ProcessFunc = () => Promise<any>
-export type BatchProcessor = typeof batchProcess
+export type BatchProcessor = typeof batchProcessor
 export interface RetryConfig {
   times?: number
   interval?: number
 }
 
-export interface Task {
+export interface BatchProcessTask {
   id: string
   work: ProcessFunc
 }
 
-export default async function batchProcess(
-  items: Task[],
+export default async function batchProcessor(
+  items: BatchProcessTask[],
   concurrency: number,
   retryConfig: RetryConfig = {},
 ): Promise<void> {
   let errorCount = 0
-  const worker = async (task: Task): Promise<void> =>
+  const worker = async (task: BatchProcessTask): Promise<void> =>
     retry(retryConfig,  async () => task.work())
 
-  const q = queue<Task>(worker, concurrency)
+  const q = queue<BatchProcessTask>(worker, concurrency)
 
   q.error(({ message }, task) => {
     console.log(`task ${task.id} had error: ${message}`)

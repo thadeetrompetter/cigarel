@@ -5,21 +5,26 @@ import { AppConfig } from "../../app/config/Config"
 import { injectable, inject } from "inversify"
 import { TYPES } from "../../config/types"
 import { StreamToBuffer } from "../../helpers/file/StreamToBuffer"
+import { BatchProcessTask, BatchProcessor } from "../../helpers/concurrency/BatchProcessor"
+import { UploadMultipartPartInput, UploadMultipartPartOutput } from "aws-sdk/clients/glacier"
 
 @injectable()
 export class GlacierMultipartUpload implements IGlacierUploadStrategy {
   private config: AppConfig
   private glacier: Glacier
   private streamToBuffer: StreamToBuffer
+  private batchProcessor: BatchProcessor
 
   public constructor(
     @inject(TYPES.AppConfig) config: AppConfig,
     @inject(TYPES.Glacier) glacier: Glacier,
     @inject(TYPES.StreamToBuffer) streamToBuffer: StreamToBuffer,
+    @inject(TYPES.BatchProcessor) batchProcessor: BatchProcessor,
   ) {
     this.config = config
     this.glacier = glacier
     this.streamToBuffer = streamToBuffer
+    this.batchProcessor = batchProcessor
   }
 
   public async upload(parts: UploadPart[], treeHash: string): Promise<GlacierUploadResult> {
@@ -53,17 +58,14 @@ export class GlacierMultipartUpload implements IGlacierUploadStrategy {
   }
 
   private async doUpload(parts: UploadPart[], uploadId: string, vaultName: string): Promise<void> {
+    const uploadTasks = this.createUploadTasks(parts, {
+      accountId: "-",
+      uploadId,
+      vaultName
+    })
+
     try {
-      await Promise.all(parts.map(async part => {
-        const buffer = await this.streamToBuffer(part.stream)
-        return this.glacier.uploadMultipartPart({
-          accountId: "-",
-          uploadId,
-          vaultName,
-          body: buffer,
-          range: `bytes ${part.start}-${part.end}/*`,
-        }).promise()
-      }))
+      await this.batchProcessor(uploadTasks, this.config.concurrency)
     } catch (err) {
       throw new GlacierPartsUploadFailed(err.message)
     }
@@ -94,6 +96,27 @@ export class GlacierMultipartUpload implements IGlacierUploadStrategy {
   private getTotalSize(parts: UploadPart[]): number {
     const [{ end:size }] = parts.slice(parts.length - 1)
     return size + 1
+  }
+
+  private createUploadTasks(parts: UploadPart[], taskParams: UploadMultipartPartInput): BatchProcessTask[] {
+    return parts.map((part, i) => {
+      return this.createUploadTask(part, i, taskParams)
+    })
+  }
+
+  private createUploadTask(part: UploadPart, index: number, taskParams: UploadMultipartPartInput): BatchProcessTask {
+    const { stream, start, end } = part
+    return {
+      id: `${index + 1}: ${start}-${end}`,
+      work: async (): Promise<UploadMultipartPartOutput> => {
+        const buffer = await this.streamToBuffer(stream)
+        return this.glacier.uploadMultipartPart({
+          ...taskParams,
+          range: `bytes ${part.start}-${part.end}/*`,
+          body: buffer
+        }).promise()
+      }
+    }
   }
 }
 

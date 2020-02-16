@@ -1,11 +1,11 @@
-import batchProcess, { Task } from "../../../../src/helpers/concurrency/BatchProcessor"
+import batchProcessor, { BatchProcessTask } from "../../../../src/helpers/concurrency/BatchProcessor"
 
 describe("BatchProcessor", () => {
   const task1 = jest.fn()
   const task2 = jest.fn()
   const task3 = jest.fn()
 
-  const tasks: Task[] = [
+  const tasks: BatchProcessTask[] = [
     { id: "1", work: task1 },
     { id: "2", work: task2 },
     { id: "3", work: task3 }
@@ -22,7 +22,7 @@ describe("BatchProcessor", () => {
     task2.mockResolvedValue("success")
     task3.mockResolvedValue("success")
 
-    await expect(batchProcess(tasks, 1))
+    await expect(batchProcessor(tasks, 1))
       .resolves
       .not
       .toThrow()
@@ -37,7 +37,7 @@ describe("BatchProcessor", () => {
     task2.mockResolvedValue("success")
     task3.mockRejectedValue(new Error("failure"))
 
-    await expect(batchProcess(tasks, 1))
+    await expect(batchProcessor(tasks, 1))
       .rejects
       .toThrowError("1 queue item(s) gave an error")
 
@@ -52,7 +52,7 @@ describe("BatchProcessor", () => {
     task2.mockRejectedValue(new Error("failure"))
     task3.mockRejectedValue(new Error("failure"))
 
-    await expect(batchProcess(tasks, 1, { times: 3 } ))
+    await expect(batchProcessor(tasks, 1, { times: 3 } ))
       .rejects
       .toThrowError("3 queue item(s) gave an error")
 
@@ -71,7 +71,7 @@ describe("BatchProcessor", () => {
 
     task3.mockResolvedValueOnce("success")
 
-    await expect(batchProcess(tasks, 1, { times: 3 } ))
+    await expect(batchProcessor(tasks, 1, { times: 3 } ))
       .resolves
       .not
       .toThrow()
