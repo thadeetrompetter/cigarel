@@ -19,7 +19,10 @@ module.exports = {
         "@typescript-eslint"
     ],
     "rules": {
-        "indent": "off",
+        "indent": [
+            "error",
+            2
+        ],
         "linebreak-style": [
             "error",
             "unix"
@@ -32,7 +35,6 @@ module.exports = {
             "error",
             "never"
         ],
-        "@typescript-eslint/indent": "off",
         "@typescript-eslint/adjacent-overload-signatures": "error",
         "@typescript-eslint/ban-ts-ignore": "error",
         "@typescript-eslint/ban-types": "error",
@@ -42,9 +44,11 @@ module.exports = {
         "@typescript-eslint/consistent-type-assertions": "error",
         "@typescript-eslint/explicit-function-return-type": "error",
         "@typescript-eslint/interface-name-prefix": "off",
-        "@typescript-eslint/member-delimiter-style": ["error",{ multiline: {
-          "delimiter": "none"
-        }}],
+        "@typescript-eslint/member-delimiter-style": ["error", {
+          "multiline": {
+            "delimiter": "none"
+          }
+        }],
         "no-array-constructor": "off",
         "@typescript-eslint/no-array-constructor": "error",
         "no-empty-function": "off",

@@ -8,11 +8,11 @@ import { FileHelper, FileReader, IFileHelper } from "../helpers/file/FileHelper"
 import { streamToBuffer, StreamToBuffer } from "../helpers/file/StreamToBuffer"
 import { GlacierSingleUpload } from "../services/GlacierUploader/GlacierSingleUpload"
 import { GlacierMultipartUpload } from "../services/GlacierUploader/GlacierMultipartUpload"
-import batchProcessor, { BatchProcessor } from "../helpers/concurrency/BatchProcessor"
-import { Uploader } from "../app/uploader/Uploader"
+import batchProcess, { BatchProcessor } from "../helpers/concurrency/BatchProcessor"
+import { Uploader, IUploader } from "../app/uploader/Uploader"
 import { Config } from "../app/config/Config"
 
-export default function bootstrap(): void {
+export default function bootstrap(): IUploader {
   const container = new inversify.Container()
 
   // App Config
@@ -24,7 +24,7 @@ export default function bootstrap(): void {
   container.bind<string>(TYPES.WorkDir).toConstantValue(process.cwd())
 
   // File system
-  container.bind<BatchProcessor>(TYPES.BatchProcessor).toFunction(batchProcessor)
+  container.bind<BatchProcessor>(TYPES.BatchProcessor).toFunction(batchProcess)
   container.bind<FileReader>(TYPES.FileReader).toFunction(promises.readFile)
   container.bind<IFileHelper>(TYPES.FileHelper).to(FileHelper)
   container.bind<ReadStreamCreator>(TYPES.ReadStreamCreator).toFunction(createReadStream)
