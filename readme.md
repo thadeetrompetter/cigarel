@@ -35,3 +35,23 @@ container.bind<inversify.interfaces.Newable<GlacierMultipartUpload>>(TYPES.Glaci
 * [ ] Create command line app
 * [ ] cross-compile
 * [ ] publish as npm package
+
+## Test-run
+1. Configure chunk size in `src/config/Bootstrap.ts`
+1. Configure file to upload in `src/app/App.ts`
+1. Run `npm run build`
+1. Run `node dist/app/App.js`
+1. Save the archive id
+1. create a job params json file that contains the archive id:
+```json
+{
+  "Type": "archive-retrieval",
+  "Description": "Optional description",
+  "ArchiveId": "{{ returned archive id }}"
+}
+```
+1. Run `glacier initiate-job --account-id - --vault-name {{ vault name }} --job-parameters file://{{ saved job param file }}`.
+returns job id
+1. Poll with `glacier describe-job --account-id - --vault-name {{ vault name }} --job-id {{ returned job id }}`
+returns complete status
+1. When complete, retrieve: `glacier get-job-output --account-id - --vault-name {{ vault name }} --job-id {{ job id }} <save location>`
