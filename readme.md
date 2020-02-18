@@ -7,8 +7,8 @@ Upload files to Amazon S3 Glacier
 * [x] Enforce a max file size for single file upload
 * [ ] Accept user-provided AWS credentials
 * [x] Disallow uploading an empty file
-* [ ] Set up queue mechanism (async.queue)
-* [ ] Retry failed uploads
+* [x] Set up queue mechanism (async.queue)
+* [x] Retry failed uploads
 * [x] Make sure the (optional) archiveId property returned by Glacier uploads is not undefined
 * [ ] Accept archive description
 * [ ] New or existing Glacier vault (create if not exist)
