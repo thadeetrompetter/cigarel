@@ -24,16 +24,13 @@ export default async function batchProcessor(
 
   const q = queue<BatchProcessTask>(worker, concurrency)
 
-  q.error(({ message }, task) => {
-    console.log(`task ${task.id} had error: ${message}`)
+  q.error(() => {
     errorCount++
   })
 
   q.push(items)
 
   await q.drain()
-
-  console.log("queue is done")
 
   if (errorCount > 0) {
     throw new Error(`${errorCount} queue item(s) gave an error`)

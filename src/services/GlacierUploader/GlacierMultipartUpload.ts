@@ -6,7 +6,7 @@ import { injectable, inject } from "inversify"
 import { TYPES } from "../../config/types"
 import { StreamToBuffer } from "../../helpers/file/StreamToBuffer"
 import { BatchProcessTask, BatchProcessor } from "../../helpers/concurrency/BatchProcessor"
-import { UploadMultipartPartInput, UploadMultipartPartOutput } from "aws-sdk/clients/glacier"
+import { UploadMultipartPartInput } from "aws-sdk/clients/glacier"
 
 @injectable()
 export class GlacierMultipartUpload implements IGlacierUploadStrategy {
@@ -108,9 +108,9 @@ export class GlacierMultipartUpload implements IGlacierUploadStrategy {
     const { stream, start, end } = part
     return {
       id: `${index + 1}: ${start}-${end}`,
-      work: async (): Promise<UploadMultipartPartOutput> => {
+      work: async (): Promise<void> => {
         const buffer = await this.streamToBuffer(stream)
-        return this.glacier.uploadMultipartPart({
+        await this.glacier.uploadMultipartPart({
           ...taskParams,
           range: `bytes ${part.start}-${part.end}/*`,
           body: buffer

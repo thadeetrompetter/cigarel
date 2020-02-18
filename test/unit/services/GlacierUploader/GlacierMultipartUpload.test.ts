@@ -21,7 +21,7 @@ import {
 } from "aws-sdk/clients/glacier"
 import { UploadPart } from "../../../../src/app/upload-job-creator/UploadJobCreator"
 import { ReadStream, createReadStream } from "fs"
-import { streamToBuffer } from "../../../../src/helpers/file/StreamToBuffer"
+import batchProcessor from "../../../../src/helpers/concurrency/BatchProcessor"
 
 interface GetUploadPartOutput {
   part: IMock<UploadPart>
@@ -62,11 +62,13 @@ describe("GlacierMultipartUpload", () => {
   AWSMock.setSDKInstance(AWS)
 
   const config = Mock.ofType<AppConfig>()
-  const batchProcessor = jest.fn()
+  const mockBatchProcessor = jest.fn()
+  const mockStreamToBuffer = jest.fn()
 
   beforeEach(() => {
     config.reset()
-    batchProcessor.mockReset()
+    mockBatchProcessor.mockReset()
+    mockStreamToBuffer.mockReset()
   })
 
   afterEach(() => {
@@ -79,13 +81,15 @@ describe("GlacierMultipartUpload", () => {
     AWSMock.mock("Glacier", "uploadMultipartPart", Promise.resolve(uploadMultipartResult))
     AWSMock.mock("Glacier", "completeMultipartUpload", Promise.resolve(completeMultipartUploadResult))
 
+    config.setup(c => c.concurrency)
+      .returns(() => 1)
+      .verifiable(Times.once())
+
     const glacier = new AWS.Glacier()
 
-    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, streamToBuffer, batchProcessor)
+    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, mockStreamToBuffer, batchProcessor)
 
     setupConfigMock(config, MB, vaultName)
-
-    batchProcessor.mockResolvedValue(undefined)
 
     await expect(glacierMultipartUpload.upload(parts, treeHash))
       .resolves
@@ -100,7 +104,7 @@ describe("GlacierMultipartUpload", () => {
 
     const glacier = new AWS.Glacier()
 
-    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, streamToBuffer, batchProcessor)
+    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, mockStreamToBuffer, mockBatchProcessor)
 
     setupConfigMock(config, MB, vaultName)
 
@@ -117,7 +121,7 @@ describe("GlacierMultipartUpload", () => {
 
     const glacier = new AWS.Glacier()
 
-    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, streamToBuffer, batchProcessor)
+    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, mockStreamToBuffer, mockBatchProcessor)
 
     setupConfigMock(config, MB, vaultName)
 
@@ -126,7 +130,7 @@ describe("GlacierMultipartUpload", () => {
       .toThrowError(error)
   })
 
-  it("will throw a GlacierPartsUploadFailed error if uploading file parts failed", async () => {
+  it("will throw a GlacierPartsUploadFailed error if uploadMultipartPart fails", async () => {
     const error = new GlacierPartsUploadFailed("3 queue item(s) gave an error")
 
     AWSMock.mock("Glacier", "initiateMultipartUpload", Promise.resolve(initResult))
@@ -134,14 +138,40 @@ describe("GlacierMultipartUpload", () => {
       cb(error, null)
     })
 
+    config.setup(c => c.concurrency)
+      .returns(() => 1)
+      .verifiable(Times.once())
+
     const glacier = new AWS.Glacier()
 
-    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, streamToBuffer, batchProcessor)
+    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, mockStreamToBuffer, mockBatchProcessor)
+
+    mockBatchProcessor.mockRejectedValue(error)
 
     setupConfigMock(config, MB, vaultName)
 
-    // Uploading file parts fails if batch processor cannot complete an upload within configured n retry attempts.
-    batchProcessor.mockRejectedValue(new Error(error.message))
+    await expect(glacierMultipartUpload.upload(parts, treeHash))
+      .rejects
+      .toThrowError(error)
+  })
+
+  it("will throw a GlacierPartsUploadFailed error if stream to buffer conversion fails", async () => {
+    AWSMock.mock("Glacier", "initiateMultipartUpload", Promise.resolve(initResult))
+
+    const streamToBufferError = new Error("error converting stream to buffer")
+    const error = new GlacierPartsUploadFailed("3 queue item(s) gave an error")
+
+    config.setup(c => c.concurrency)
+      .returns(() => 1)
+      .verifiable(Times.once())
+
+    const glacier = new AWS.Glacier()
+
+    mockStreamToBuffer.mockRejectedValue(streamToBufferError)
+
+    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, mockStreamToBuffer, batchProcessor)
+
+    setupConfigMock(config, MB, vaultName)
 
     await expect(glacierMultipartUpload.upload(parts, treeHash))
       .rejects
@@ -157,13 +187,15 @@ describe("GlacierMultipartUpload", () => {
       cb(error, null)
     })
 
+    config.setup(c => c.concurrency)
+      .returns(() => 1)
+      .verifiable(Times.once())
+
     const glacier = new AWS.Glacier()
 
-    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, streamToBuffer, batchProcessor)
+    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, mockStreamToBuffer, mockBatchProcessor)
 
     setupConfigMock(config, MB, vaultName)
-
-    batchProcessor.mockResolvedValue(undefined)
 
     await expect(glacierMultipartUpload.upload(parts, treeHash))
       .rejects
@@ -177,13 +209,17 @@ describe("GlacierMultipartUpload", () => {
     AWSMock.mock("Glacier", "uploadMultipartPart", Promise.resolve(uploadMultipartResult))
     AWSMock.mock("Glacier", "completeMultipartUpload", Promise.resolve<ArchiveCreationOutput>({}))
 
+    config.setup(c => c.concurrency)
+      .returns(() => 1)
+      .verifiable(Times.once())
+
     const glacier = new AWS.Glacier()
 
-    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, streamToBuffer, batchProcessor)
+    const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, mockStreamToBuffer, mockBatchProcessor)
 
     setupConfigMock(config, MB, vaultName)
 
-    batchProcessor.mockResolvedValue(undefined)
+    mockBatchProcessor.mockResolvedValue(undefined)
 
     await expect(glacierMultipartUpload.upload(parts, treeHash))
       .rejects
