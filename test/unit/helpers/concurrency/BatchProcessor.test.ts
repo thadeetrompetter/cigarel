@@ -1,35 +1,83 @@
-import batchProcess from "../../../../src/helpers/concurrency/BatchProcessor"
-
-interface ItemInput {
-  foo: number
-}
-
-interface ItemOutput {
-  bar: number
-}
+import batchProcessor, { BatchProcessTask } from "../../../../src/helpers/concurrency/BatchProcessor"
 
 describe("BatchProcessor", () => {
-  const items: ItemInput[] = [
-    { foo: 1 },
-    { foo: 2 },
-    { foo: 3 }
+  const task1 = jest.fn()
+  const task2 = jest.fn()
+  const task3 = jest.fn()
+
+  const tasks: BatchProcessTask[] = [
+    { id: "1", work: task1 },
+    { id: "2", work: task2 },
+    { id: "3", work: task3 }
   ]
+
+  beforeEach(() => {
+    task1.mockReset()
+    task2.mockReset()
+    task3.mockReset()
+  })
+
   it("will process a list of tasks in batches", async () => {
-    const mockFunc = jest.fn()
-      .mockResolvedValueOnce({ bar: 1 })
-      .mockResolvedValueOnce({ bar: 2 })
-      .mockResolvedValueOnce({ bar: 3 })
+    task1.mockResolvedValue("success")
+    task2.mockResolvedValue("success")
+    task3.mockResolvedValue("success")
 
-    const processFn = async (item: ItemInput): Promise<ItemOutput> => mockFunc(item)
-
-    const result = batchProcess<ItemInput, ItemOutput>(items, 1, processFn)
-
-    await expect(result)
+    await expect(batchProcessor(tasks, 1))
       .resolves
-      .toEqual([
-        { bar: 1 },
-        { bar: 2 },
-        { bar: 3 }
-      ])
+      .not
+      .toThrow()
+
+    expect(task1.mock.calls.length).toBe(1)
+    expect(task2.mock.calls.length).toBe(1)
+    expect(task3.mock.calls.length).toBe(1)
+  })
+
+  it("will throw an error if any task completed unsuccessfully after retries", async () => {
+    task1.mockResolvedValue("success")
+    task2.mockResolvedValue("success")
+    task3.mockRejectedValue(new Error("failure"))
+
+    await expect(batchProcessor(tasks, 1))
+      .rejects
+      .toThrowError("1 queue item(s) gave an error")
+
+    // 5 retries is default
+    expect(task1.mock.calls.length).toBe(1)
+    expect(task2.mock.calls.length).toBe(1)
+    expect(task3.mock.calls.length).toBe(5)
+  })
+
+  it("will allow the amount of retries to be customized", async () => {
+    task1.mockRejectedValue(new Error("failure"))
+    task2.mockRejectedValue(new Error("failure"))
+    task3.mockRejectedValue(new Error("failure"))
+
+    await expect(batchProcessor(tasks, 1, { times: 3 } ))
+      .rejects
+      .toThrowError("3 queue item(s) gave an error")
+
+    expect(task1.mock.calls.length).toBe(3)
+    expect(task2.mock.calls.length).toBe(3)
+    expect(task3.mock.calls.length).toBe(3)
+  })
+
+  it("will resolve if tasks complete within the alotted amount of retries", async () => {
+    task1.mockRejectedValueOnce(new Error("failure"))
+    task1.mockRejectedValueOnce(new Error("failure"))
+    task1.mockResolvedValueOnce("success")
+
+    task2.mockRejectedValueOnce(new Error("failure"))
+    task2.mockResolvedValueOnce("success")
+
+    task3.mockResolvedValueOnce("success")
+
+    await expect(batchProcessor(tasks, 1, { times: 3 } ))
+      .resolves
+      .not
+      .toThrow()
+
+    expect(task1.mock.calls.length).toBe(3)
+    expect(task2.mock.calls.length).toBe(2)
+    expect(task3.mock.calls.length).toBe(1)
   })
 })
