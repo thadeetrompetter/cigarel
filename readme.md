@@ -45,8 +45,8 @@ container.bind<inversify.interfaces.Newable<GlacierMultipartUpload>>(TYPES.Glaci
   "ArchiveId": "{{ returned archive id }}"
 }
 ```
-1. Run `glacier initiate-job --account-id - --vault-name {{ vault name }} --job-parameters file://{{ saved job param file }}`.
+1. Run `aws glacier initiate-job --account-id - --vault-name {{ vault name }} --job-parameters file://{{ saved job param file }}`.
 returns job id
-1. Poll with `glacier describe-job --account-id - --vault-name {{ vault name }} --job-id {{ returned job id }}`
+1. Poll with `aws glacier describe-job --account-id - --vault-name {{ vault name }} --job-id {{ returned job id }}`
 returns complete status
-1. When complete, retrieve: `glacier get-job-output --account-id - --vault-name {{ vault name }} --job-id {{ job id }} <save location>`
+1. When complete, retrieve: `aws glacier get-job-output --account-id - --vault-name {{ vault name }} --job-id {{ job id }} <save location>`

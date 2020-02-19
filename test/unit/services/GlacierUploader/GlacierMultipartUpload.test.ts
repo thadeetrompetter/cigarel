@@ -64,11 +64,13 @@ describe("GlacierMultipartUpload", () => {
   const config = Mock.ofType<AppConfig>()
   const mockBatchProcessor = jest.fn()
   const mockStreamToBuffer = jest.fn()
+  const mockInitiateMultipartUpload = jest.fn()
 
   beforeEach(() => {
     config.reset()
     mockBatchProcessor.mockReset()
     mockStreamToBuffer.mockReset()
+    mockInitiateMultipartUpload.mockReset()
   })
 
   afterEach(() => {
@@ -77,7 +79,10 @@ describe("GlacierMultipartUpload", () => {
   })
 
   it("will multipart-upload an archive", async () => {
-    AWSMock.mock("Glacier", "initiateMultipartUpload", Promise.resolve(initResult))
+    const description = "archive description"
+    mockInitiateMultipartUpload.mockResolvedValue(initResult)
+
+    AWSMock.mock("Glacier", "initiateMultipartUpload", mockInitiateMultipartUpload)
     AWSMock.mock("Glacier", "uploadMultipartPart", Promise.resolve(uploadMultipartResult))
     AWSMock.mock("Glacier", "completeMultipartUpload", Promise.resolve(completeMultipartUploadResult))
 
@@ -89,11 +94,19 @@ describe("GlacierMultipartUpload", () => {
 
     const glacierMultipartUpload = new GlacierMultipartUpload(config.object, glacier, mockStreamToBuffer, batchProcessor)
 
-    setupConfigMock(config, MB, vaultName)
+    setupConfigMock(config, MB, vaultName, description)
 
     await expect(glacierMultipartUpload.upload(parts, treeHash))
       .resolves
       .toEqual({ archiveId })
+
+    expect(mockInitiateMultipartUpload.mock.calls[0][0])
+      .toEqual({
+        accountId: "-",
+        vaultName,
+        partSize: String(MB),
+        archiveDescription: description
+      })
   })
 
   it("will throw a GlacierInitiateUploadFailed error if upload fails to initialize", async () => {
@@ -255,12 +268,16 @@ function getUploadPart({start, end }: GetUploadPartParams): GetUploadPartOutput 
   return { part, stream }
 }
 
-function setupConfigMock(mock: IMock<AppConfig>, chunkSize: number, vaultName: string): void {
+function setupConfigMock(mock: IMock<AppConfig>, chunkSize: number, vaultName: string, description?: string): void {
   mock.setup(c => c.chunkSize)
     .returns(() => chunkSize)
     .verifiable(Times.once())
 
   mock.setup(c => c.vaultName)
     .returns(() => vaultName)
+    .verifiable(Times.once())
+
+  mock.setup(c => c.description)
+    .returns(() => description)
     .verifiable(Times.once())
 }
