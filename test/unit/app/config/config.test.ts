@@ -35,4 +35,18 @@ describe("Config", () => {
     const config2 = new Config({ concurrency: 7 })
     expect(config2.concurrency).toBe(7)
   })
+
+  it("will set a description for the archive if one is provided", () => {
+    const description = "archive description"
+    const config = new Config({ description })
+
+    expect(config.description).toBe(description)
+  })
+
+  it("will not set description for the archive if an empty string is provided", () => {
+    const description = ""
+    const config = new Config({ description })
+
+    expect(config.description).toBeUndefined()
+  })
 })

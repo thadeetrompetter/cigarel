@@ -15,8 +15,10 @@ describe("GlacierSingleUpload", () => {
   const stream = Mock.ofType<ReadStream>()
   const uploadPart = Mock.ofType<UploadPart>()
   const streamToBuffer: IMock<StreamToBuffer> = Mock.ofInstance<StreamToBuffer>(streamToBufferHelper)
+  const mockUploadArchive = jest.fn()
 
   beforeEach(() => {
+    mockUploadArchive.mockReset()
     config.reset()
     uploadPart.reset()
     stream.reset()
@@ -35,26 +37,36 @@ describe("GlacierSingleUpload", () => {
   it("will upload an archive to AWS Glacier", async () => {
     const archiveId = "archive id"
     const vaultName = "vault name"
+    const description = "archive description"
     const treeHash = "tree hash"
     const buffer = Buffer.alloc(123, "binary")
 
-    AWSMock.mock("Glacier", "uploadArchive", Promise.resolve({
+    mockUploadArchive.mockResolvedValue({
       location: "the location",
       checksum: "the checksum",
       archiveId,
-    }))
+    })
+
+    AWSMock.mock("Glacier", "uploadArchive", mockUploadArchive)
 
     const glacier = new AWS.Glacier()
 
     const singleUpload = new GlacierSingleUpload(config.object, glacier, streamToBuffer.object)
 
-    setUpMocks(vaultName, stream, buffer)
+    setUpMocks(vaultName, stream, buffer, description)
 
     await expect(singleUpload.upload([ uploadPart.object ], treeHash))
       .resolves
       .toEqual({
         archiveId
       })
+
+    expect(mockUploadArchive.mock.calls[0][0]).toEqual({
+      accountId: "-",
+      vaultName,
+      body: buffer,
+      archiveDescription: description
+    })
   })
 
   it("will throw a GlacierSingleUploadError if file cannot be uploaded", async () => {
@@ -81,8 +93,9 @@ describe("GlacierSingleUpload", () => {
     const vaultName = "vault name"
     const treeHash = "tree hash"
     const buffer = Buffer.alloc(123, "binary")
+    mockUploadArchive.mockResolvedValue({})
 
-    AWSMock.mock("Glacier", "uploadArchive", Promise.resolve({}))
+    AWSMock.mock("Glacier", "uploadArchive", mockUploadArchive)
 
     const glacier = new AWS.Glacier()
 
@@ -93,11 +106,26 @@ describe("GlacierSingleUpload", () => {
     await expect(singleUpload.upload([ uploadPart.object ], treeHash))
       .rejects
       .toThrowError(new GlacierArchiveIdMissing())
+
+    expect(mockUploadArchive.mock.calls[0][0]).toEqual({
+      accountId: "-",
+      vaultName,
+      body: buffer,
+    })
   })
 
-  function setUpMocks (vaultName: string, stream: IMock<ReadStream>, buffer: Buffer): void {
+  function setUpMocks (
+    vaultName: string,
+    stream: IMock<ReadStream>,
+    buffer: Buffer,
+    description?: string
+  ): void {
     config.setup(c => c.vaultName)
       .returns(() => vaultName)
+      .verifiable(Times.once())
+
+    config.setup(c => c.description)
+      .returns(() => description)
       .verifiable(Times.once())
 
     uploadPart.setup(u => u.stream)

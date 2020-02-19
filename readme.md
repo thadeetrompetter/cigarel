@@ -5,17 +5,13 @@ Upload files to Amazon S3 Glacier
 
 ### Business logic
 * [x] Enforce a max file size for single file upload
-* [ ] Accept user-provided AWS credentials
 * [x] Disallow uploading an empty file
 * [x] Set up queue mechanism (async.queue)
 * [x] Retry failed uploads
 * [x] Make sure the (optional) archiveId property returned by Glacier uploads is not undefined
-* [ ] Accept archive description
-* [ ] New or existing Glacier vault (create if not exist)
 * [ ] Download archive
 * [ ] Store uploaded archives in db
 * [ ] Download notifications
-* [ ] Logger
 
 ### Optimizations
 * [ ] Create full-file tree hash from stream instead of buffer (better for large files)
@@ -32,7 +28,6 @@ container.bind<inversify.interfaces.Newable<GlacierMultipartUpload>>(TYPES.Glaci
 
 ### Deliverable
 * [ ] Set up build pipeline
-* [ ] Create command line app
 * [ ] cross-compile
 * [ ] publish as npm package
 

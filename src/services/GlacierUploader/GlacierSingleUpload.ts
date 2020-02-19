@@ -5,6 +5,8 @@ import { AppConfig } from "../../app/config/Config"
 import { injectable, inject } from "inversify"
 import { TYPES } from "../../config/types"
 import { StreamToBuffer } from "../../helpers/file/StreamToBuffer"
+import { UploadArchiveInput } from "aws-sdk/clients/glacier"
+import { ReadStream } from "fs"
 
 @injectable()
 export class GlacierSingleUpload implements IGlacierUploadStrategy {
@@ -32,13 +34,10 @@ export class GlacierSingleUpload implements IGlacierUploadStrategy {
    */
   public async upload([{ stream }]: UploadPart[], _treeHash: string): Promise<GlacierUploadResult> {
     let result
-    const buffer = await this.streamToBuffer(stream)
+
     try {
-      result = await this.glacier.uploadArchive({
-        accountId: "-",
-        body: buffer,
-        vaultName: this.config.vaultName
-      }).promise()
+      const uploadParams = await this.getUploadParams(this.config, stream)
+      result = await this.glacier.uploadArchive(uploadParams).promise()
     } catch (err) {
       throw new GlacierUploadArchiveFailed(err.message)
     }
@@ -48,6 +47,22 @@ export class GlacierSingleUpload implements IGlacierUploadStrategy {
     }
 
     return { archiveId: result.archiveId }
+  }
+
+  private async getUploadParams(config: AppConfig, stream: ReadStream): Promise<UploadArchiveInput> {
+    const buffer = await this.streamToBuffer(stream)
+    const { vaultName, description } = config
+    const params: UploadArchiveInput = {
+      accountId: "-",
+      body: buffer,
+      vaultName
+    }
+
+    if (description) {
+      params.archiveDescription = description
+    }
+
+    return params
   }
 }
 

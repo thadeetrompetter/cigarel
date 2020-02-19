@@ -2,6 +2,7 @@ export interface AppConfig {
   chunkSize: number
   concurrency: number
   vaultName: string
+  description?: string
 }
 
 export type ConfigInput = Partial<Omit<AppConfig, "chunkSize"> & {
@@ -17,12 +18,19 @@ export class Config implements AppConfig {
   public readonly chunkSize: number
   public readonly concurrency: number
   public readonly vaultName: string
+  public readonly description?: string
   private readonly maxChunkSize = this.defaultChunkSize * 1024 * 4
 
   public constructor(config: ConfigInput = {}) {
     this.chunkSize = this.getChunkSize(config.fileSizeInMB)
     this.concurrency = config.concurrency || Config.concurrency
     this.vaultName = config.vaultName || Config.vaultName
+
+    const { description } = config
+
+    if (description && description.length) {
+      this.description = description
+    }
   }
 
   /**
