@@ -6,7 +6,7 @@ import { injectable, inject } from "inversify"
 import { TYPES } from "../../config/types"
 import { StreamToBuffer } from "../../helpers/file/StreamToBuffer"
 import { BatchProcessTask, BatchProcessor } from "../../helpers/concurrency/BatchProcessor"
-import { UploadMultipartPartInput } from "aws-sdk/clients/glacier"
+import { UploadMultipartPartInput, InitiateMultipartUploadInput } from "aws-sdk/clients/glacier"
 
 @injectable()
 export class GlacierMultipartUpload implements IGlacierUploadStrategy {
@@ -28,8 +28,8 @@ export class GlacierMultipartUpload implements IGlacierUploadStrategy {
   }
 
   public async upload(parts: UploadPart[], treeHash: string): Promise<GlacierUploadResult> {
-    const { vaultName, chunkSize } = this.config
-    const uploadId = await this.initiateUpload(chunkSize, vaultName)
+    const { vaultName, chunkSize, description } = this.config
+    const uploadId = await this.initiateUpload(chunkSize, vaultName, description)
     await this.doUpload(parts, uploadId, vaultName)
     const totalSize = this.getTotalSize(parts)
     const archiveId = await this.completeUpload(uploadId, vaultName, treeHash, totalSize)
@@ -37,15 +37,21 @@ export class GlacierMultipartUpload implements IGlacierUploadStrategy {
     return { archiveId }
   }
 
-  private async initiateUpload(chunkSize: number, vaultName: string): Promise<string> {
+  private async initiateUpload(chunkSize: number, vaultName: string, description?: string): Promise<string> {
+    const params: InitiateMultipartUploadInput = {
+      accountId: "-",
+      partSize: String(chunkSize),
+      vaultName,
+    }
+
+    if (description) {
+      params.archiveDescription = description
+    }
+
     let uploadId
 
     try {
-      ({ uploadId } = await this.glacier.initiateMultipartUpload({
-        accountId: "-",
-        partSize: String(chunkSize),
-        vaultName,
-      }).promise())
+      ({ uploadId } = await this.glacier.initiateMultipartUpload(params).promise())
     } catch(err) {
       throw new GlacierInitiateUploadFailed(err.message)
     }
