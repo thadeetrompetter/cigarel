@@ -6,6 +6,7 @@ import { ReadStream } from "fs"
 import { Glacier } from "aws-sdk/clients/all"
 import { GlacierComputeChecksumsOutput } from "aws-sdk/lib/services/glacier"
 import { AppConfig } from "../../../../src/app/config/Config"
+import { ILogger } from "../../../../src/helpers/logger/Logger"
 
 describe("UploadJobCreator", () => {
   const fileInfo = Mock.ofType<FileInfo>()
@@ -14,6 +15,7 @@ describe("UploadJobCreator", () => {
   const stream = Mock.ofType<ReadStream>()
   const glacier = Mock.ofType<Glacier>()
   const checksumOutput = Mock.ofType<GlacierComputeChecksumsOutput>()
+  const logger = Mock.ofType<ILogger>()
 
   const fileContents = Buffer.from("12345678")
   const treeHash = "a tree hash"
@@ -26,6 +28,7 @@ describe("UploadJobCreator", () => {
     stream.reset()
     glacier.reset()
     checksumOutput.reset()
+    logger.reset()
   })
 
   afterEach(() => {
@@ -35,6 +38,7 @@ describe("UploadJobCreator", () => {
     stream.verifyAll()
     glacier.verifyAll()
     checksumOutput.verifyAll()
+    logger.verifyAll()
   })
 
   function setUpReadStreamCreatorMock (parts: Record<string, number>[] = []): void {
@@ -66,7 +70,7 @@ describe("UploadJobCreator", () => {
 
     fileInfo.setup(f => f.path)
       .returns(() => filepath)
-      .verifiable(Times.once())
+      .verifiable(Times.exactly(2))
 
     glacier.setup(g => g.computeChecksums(fileContents))
       .returns(() => checksumOutput.object)
@@ -74,12 +78,19 @@ describe("UploadJobCreator", () => {
 
     checksumOutput.setup(c => c.treeHash)
       .returns(() => treeHash)
-      .verifiable(Times.exactly(1))
+      .verifiable(Times.once())
+
+    logger.setup(l => l.debug("Created single upload job"))
+      .verifiable(Times.once())
+
+    logger.setup(l => l.debug(`Calculated treehash ${treeHash} for file ${filepath}`))
+      .verifiable(Times.once())
 
     const fileSplitter = new UploadJobCreator(
       config.object,
       readStreamCreator.object,
-      glacier.object
+      glacier.object,
+      logger.object
     )
 
     expect(fileSplitter.getUploadJob(fileInfo.object))
@@ -121,7 +132,7 @@ describe("UploadJobCreator", () => {
 
     fileInfo.setup(f => f.path)
       .returns(() => filepath)
-      .verifiable(Times.once())
+      .verifiable(Times.exactly(2))
 
     glacier.setup(g => g.computeChecksums(fileContents))
       .returns(() => checksumOutput.object)
@@ -131,10 +142,14 @@ describe("UploadJobCreator", () => {
       .returns(() => treeHash)
       .verifiable(Times.once())
 
+    logger.setup(l => l.debug("Created multipart upload job of 4 upload parts"))
+      .verifiable(Times.once())
+
     const fileSplitter = new UploadJobCreator(
       config.object,
       readStreamCreator.object,
-      glacier.object
+      glacier.object,
+      logger.object
     )
 
     expect(fileSplitter.getUploadJob(fileInfo.object))

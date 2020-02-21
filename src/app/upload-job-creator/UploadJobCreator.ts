@@ -4,6 +4,7 @@ import { TYPES } from "../../config/types"
 import { FileInfo } from "../../helpers/file/FileHelper"
 import { Glacier } from "aws-sdk/clients/all"
 import { AppConfig } from "../config/Config"
+import { Logger } from "winston"
 
 export type UploadJobs = UploadJob[]
 
@@ -29,27 +30,32 @@ export interface UploadPart {
 
 @injectable()
 export class UploadJobCreator implements IUploadJobCreator {
-  private chunkSize: number
-  private readStreamCreator: ReadStreamCreator
-  private glacier: Glacier
+  private readonly chunkSize: number
+  private readonly readStreamCreator: ReadStreamCreator
+  private readonly glacier: Glacier
+  private readonly logger: Logger
 
   public constructor(
     @inject(TYPES.AppConfig) config: AppConfig,
     @inject(TYPES.ReadStreamCreator) createReadStream: ReadStreamCreator,
     @inject(TYPES.Glacier) glacier: Glacier,
+    @inject(TYPES.Logger) logger: Logger
   ) {
     this.readStreamCreator = createReadStream
     this.chunkSize = config.chunkSize
     this.glacier = glacier
+    this.logger = logger
   }
 
   public getUploadJob (fileInfo: FileInfo): UploadJob {
     const parts = this.createUploadParts(fileInfo)
-    return {
-      kind: parts.length > 1 ? "multipart" : "single",
-      treeHash: this.calculateHashForFile(fileInfo),
-      parts
-    }
+    const kind = parts.length > 1 ? "multipart" : "single"
+    const treeHash = this.calculateHashForFile(fileInfo)
+    this.logUploadJob(kind, parts.length)
+
+    this.logger.debug(`Calculated treehash ${treeHash} for file ${fileInfo.path}`)
+
+    return { kind, treeHash, parts }
   }
 
   private createUploadParts ({ path, size }: FileInfo): UploadPart[] {
@@ -86,5 +92,13 @@ export class UploadJobCreator implements IUploadJobCreator {
 
   private calculateHash(contents: Buffer): string  {
     return this.glacier.computeChecksums(contents).treeHash
+  }
+
+  private logUploadJob(kind: UploadType, nParts: number): void {
+    let line = `Created ${kind} upload job`
+    if (nParts > 1) {
+      line = `${line} of ${nParts} upload parts`
+    }
+    this.logger.debug(line)
   }
 }

@@ -11,5 +11,6 @@ export const TYPES = {
   BatchProcessor: Symbol.for("BatchProcessor"),
   IGlacierUploader: Symbol.for("IUploadService"),
   IUploadJobCreator: Symbol.for("IUploadJobCreator"),
-  Uploader: Symbol.for("Uploader")
+  Uploader: Symbol.for("Uploader"),
+  Logger: Symbol.for("Logger")
 }

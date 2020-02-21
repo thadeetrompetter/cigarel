@@ -1,4 +1,5 @@
 import { Config, ConfigError } from "../../../../src/app/config/Config"
+import { LogLevel } from "../../../../src/helpers/logger/Logger"
 
 const mb = 1024 * 1024
 
@@ -48,5 +49,25 @@ describe("Config", () => {
     const config = new Config({ description })
 
     expect(config.description).toBeUndefined()
+  })
+
+  it("will set a logLevel", () => {
+    const logLevel: LogLevel = "info"
+    const config = new Config({ logLevel })
+
+    expect(config.logLevel).toBe(logLevel)
+  })
+
+  it("will set dry run mode", () => {
+    const dryRun = true
+    const config = new Config({ dryRun })
+
+    expect(config.dryRun).toBe(true)
+  })
+
+  it("dry run will default to false if not configured", () => {
+    const config = new Config()
+
+    expect(config.dryRun).toBe(false)
   })
 })
