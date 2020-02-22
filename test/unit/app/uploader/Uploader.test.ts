@@ -1,5 +1,5 @@
 import "reflect-metadata"
-import { Mock, Times } from "typemoq"
+import { Mock, Times, MockBehavior } from "typemoq"
 import { AppConfig } from "../../../../src/app/config/Config"
 import { IGlacierUploader, GlacierUploadResult, IGlacierUploadStrategy } from "../../../../src/services/GlacierUploader/GlacierUploader"
 import { IFileHelper, FileInfo } from "../../../../src/helpers/file/FileHelper"
@@ -7,6 +7,7 @@ import { IUploadJobCreator, UploadJob, UploadType } from "../../../../src/app/up
 import { GlacierSingleUpload } from "../../../../src/services/GlacierUploader/GlacierSingleUpload"
 import { GlacierMultipartUpload } from "../../../../src/services/GlacierUploader/GlacierMultipartUpload"
 import { Uploader, UploaderError, UploaderMaxPartsError, UploaderEmptyFileError } from "../../../../src/app/uploader/Uploader"
+import { ILogger } from "../../../../src/helpers/logger/Logger"
 
 describe("Uploader", () => {
   const config = Mock.ofType<AppConfig>()
@@ -18,6 +19,7 @@ describe("Uploader", () => {
   const fileInfo = Mock.ofType<FileInfo>()
   const uploadJob = Mock.ofType<UploadJob>()
   const uploadResult = Mock.ofType<GlacierUploadResult>()
+  const logger = Mock.ofType<ILogger>(undefined, MockBehavior.Strict)
 
   const filePath = "/file/path"
 
@@ -27,7 +29,8 @@ describe("Uploader", () => {
     fileHelper.object,
     uploadJobCreator.object,
     glacierSingleStrategy.object,
-    glacierMultipartStrategy.object
+    glacierMultipartStrategy.object,
+    logger.object
   )
 
   beforeEach(() => {
@@ -38,6 +41,7 @@ describe("Uploader", () => {
     fileInfo.reset()
     uploadJob.reset()
     uploadResult.reset()
+    logger.reset()
   })
 
   afterEach(() => {
@@ -48,6 +52,7 @@ describe("Uploader", () => {
     fileInfo.verifyAll()
     uploadJob.verifyAll()
     uploadResult.verifyAll()
+    logger.verifyAll()
   })
 
   it.each`uploadType | uploadStrategy
@@ -59,6 +64,12 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
   const archiveId = "archive id"
 
   setUpUploadMocks(uploadType, chunkSize, fileSize, archiveId, uploadStrategy)
+
+  logger.setup(l => l.debug(`Using ${uploadType} file upload strategy`))
+    .verifiable(Times.once())
+
+  logger.setup(l => l.info(`Successfully uploaded ${filePath} of ${fileSize} Bytes to Glacier.`))
+    .verifiable(Times.once())
 
   await expect(uploader.upload(filePath))
     .resolves

@@ -20,7 +20,6 @@ export class Config implements AppConfig {
   private static readonly defaultChunkSizeMB = 1
   private static readonly dryRun = false
 
-
   public readonly defaultChunkSize = 1024 * 1024
   public readonly maxParts = 1e4
   public readonly chunkSize: number

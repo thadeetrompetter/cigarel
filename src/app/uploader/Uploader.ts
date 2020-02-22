@@ -4,6 +4,7 @@ import { TYPES } from "../../config/types"
 import { IGlacierUploader, IGlacierUploadStrategy } from "../../services/GlacierUploader/GlacierUploader"
 import { IUploadJobCreator, UploadType } from "../upload-job-creator/UploadJobCreator"
 import { IFileHelper } from "../../helpers/file/FileHelper"
+import { ILogger } from "../../helpers/logger/Logger"
 
 export interface IUploader {
   upload(filepath: string): Promise<UploadResult>
@@ -21,6 +22,7 @@ export class Uploader implements IUploader {
   private uploadJobCreator: IUploadJobCreator
   private singleUploadStrategy: IGlacierUploadStrategy
   private multipartUploadStrategy: IGlacierUploadStrategy
+  private logger: ILogger
 
   public constructor(
     @inject(TYPES.AppConfig) config: AppConfig,
@@ -28,7 +30,8 @@ export class Uploader implements IUploader {
     @inject(TYPES.FileHelper) fileHelper: IFileHelper,
     @inject(TYPES.IUploadJobCreator) uploadJobCreator: IUploadJobCreator,
     @inject(TYPES.GlacierSingleStrategy) singleUploadStrategy: IGlacierUploadStrategy,
-    @inject(TYPES.GlacierMultipartStrategy) multipartUploadStrategy: IGlacierUploadStrategy
+    @inject(TYPES.GlacierMultipartStrategy) multipartUploadStrategy: IGlacierUploadStrategy,
+    @inject(TYPES.Logger) logger: ILogger
   ) {
     this.config = config
     this.uploadService = uploadService
@@ -36,18 +39,23 @@ export class Uploader implements IUploader {
     this.uploadJobCreator = uploadJobCreator
     this.singleUploadStrategy = singleUploadStrategy
     this.multipartUploadStrategy = multipartUploadStrategy
+    this.logger = logger
   }
 
   public async upload(filepath: string): Promise<UploadResult> {
     const fileInfo = await this.fileHelper.read(filepath)
 
-    this.checkFileSize(fileInfo.size)
+    const size = fileInfo.size
+
+    this.checkFileSize(size)
 
     const uploadJob = this.uploadJobCreator.getUploadJob(fileInfo)
 
     this.setUploadStrategy(uploadJob.kind)
 
     const result = await this.uploadService.upload(uploadJob)
+
+    this.logger.info(`Successfully uploaded ${filepath} of ${size} Bytes to Glacier.`)
 
     return {
       archiveId: result.archiveId
@@ -65,6 +73,7 @@ export class Uploader implements IUploader {
     default:
       throw new UploaderError("unknown upload strategy selected")
     }
+    this.logger.debug(`Using ${uploadType} file upload strategy`)
   }
   /**
    * Determines if the given file size is elegible for multipart upload.
