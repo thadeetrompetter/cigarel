@@ -1,6 +1,9 @@
 import batchProcessor, { BatchProcessTask } from "../../../../src/helpers/concurrency/BatchProcessor"
+import { MockBehavior, Mock, Times } from "typemoq"
+import { ILogger } from "../../../../src/helpers/logger/Logger"
 
 describe("BatchProcessor", () => {
+  const logger = Mock.ofType<ILogger>(undefined, MockBehavior.Strict)
   const task1 = jest.fn()
   const task2 = jest.fn()
   const task3 = jest.fn()
@@ -12,9 +15,14 @@ describe("BatchProcessor", () => {
   ]
 
   beforeEach(() => {
+    logger.reset()
     task1.mockReset()
     task2.mockReset()
     task3.mockReset()
+  })
+
+  afterEach(() => {
+    logger.verifyAll()
   })
 
   it("will process a list of tasks in batches", async () => {
@@ -22,7 +30,7 @@ describe("BatchProcessor", () => {
     task2.mockResolvedValue("success")
     task3.mockResolvedValue("success")
 
-    await expect(batchProcessor(tasks, 1))
+    await expect(batchProcessor(tasks, 1, logger.object))
       .resolves
       .not
       .toThrow()
@@ -32,12 +40,15 @@ describe("BatchProcessor", () => {
     expect(task3.mock.calls.length).toBe(1)
   })
 
-  it("will throw an error if any task completed unsuccessfully after retries", async () => {
+  it("will throw an error if any task failed after retries", async () => {
     task1.mockResolvedValue("success")
     task2.mockResolvedValue("success")
     task3.mockRejectedValue(new Error("failure"))
 
-    await expect(batchProcessor(tasks, 1))
+    logger.setup(l => l.error("Task 3 failed: failure"))
+      .verifiable(Times.once())
+
+    await expect(batchProcessor(tasks, 1, logger.object))
       .rejects
       .toThrowError("1 queue item(s) gave an error")
 
@@ -52,7 +63,14 @@ describe("BatchProcessor", () => {
     task2.mockRejectedValue(new Error("failure"))
     task3.mockRejectedValue(new Error("failure"))
 
-    await expect(batchProcessor(tasks, 1, { times: 3 } ))
+    logger.setup(l => l.error("Task 1 failed: failure"))
+      .verifiable(Times.once())
+    logger.setup(l => l.error("Task 2 failed: failure"))
+      .verifiable(Times.once())
+    logger.setup(l => l.error("Task 3 failed: failure"))
+      .verifiable(Times.once())
+
+    await expect(batchProcessor(tasks, 1, logger.object, { times: 3 } ))
       .rejects
       .toThrowError("3 queue item(s) gave an error")
 
@@ -71,7 +89,7 @@ describe("BatchProcessor", () => {
 
     task3.mockResolvedValueOnce("success")
 
-    await expect(batchProcessor(tasks, 1, { times: 3 } ))
+    await expect(batchProcessor(tasks, 1, logger.object, { times: 3 } ))
       .resolves
       .not
       .toThrow()

@@ -1,4 +1,5 @@
 import { queue, retry } from "async"
+import { ILogger } from "../logger/Logger"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ProcessFunc = () => Promise<any>
@@ -16,7 +17,8 @@ export interface BatchProcessTask {
 export default async function batchProcessor(
   items: BatchProcessTask[],
   concurrency: number,
-  retryConfig: RetryConfig = {},
+  logger: ILogger,
+  retryConfig: RetryConfig = {}
 ): Promise<void> {
   let errorCount = 0
   const worker = async (task: BatchProcessTask): Promise<void> =>
@@ -24,7 +26,8 @@ export default async function batchProcessor(
 
   const q = queue<BatchProcessTask>(worker, concurrency)
 
-  q.error(() => {
+  q.error(({ message }, task) => {
+    logger.error(`Task ${task.id} failed: ${message}`)
     errorCount++
   })
 
