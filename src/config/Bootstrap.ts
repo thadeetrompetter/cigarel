@@ -11,6 +11,7 @@ import { GlacierMultipartUpload } from "../services/GlacierUploader/GlacierMulti
 import batchProcess, { BatchProcessor } from "../helpers/concurrency/BatchProcessor"
 import { Uploader, IUploader } from "../app/uploader/Uploader"
 import { Config } from "../app/config/Config"
+import { getLogger, ILogger } from "../helpers/logger/Logger"
 
 export default function bootstrap(): IUploader {
   const container = new inversify.Container()
@@ -18,10 +19,18 @@ export default function bootstrap(): IUploader {
   // App Config
   container.bind<Config>(TYPES.AppConfig).toDynamicValue(() => {
     return new Config({
-      fileSizeInMB: 8
+      // fileSizeInMB: 8,
+      description: "a test description for a single upload",
+      dryRun: process.env.DRY_RUN === "1",
+      logLevel: "debug"
     })
   })
   container.bind<string>(TYPES.WorkDir).toConstantValue(process.cwd())
+
+  // Logger
+  container.bind<ILogger>(TYPES.Logger).toDynamicValue(c => {
+    return getLogger(c.container.get<Config>(TYPES.AppConfig).logLevel)
+  })
 
   // File system
   container.bind<BatchProcessor>(TYPES.BatchProcessor).toFunction(batchProcess)

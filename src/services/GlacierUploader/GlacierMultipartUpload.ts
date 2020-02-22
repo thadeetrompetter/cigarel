@@ -7,6 +7,7 @@ import { TYPES } from "../../config/types"
 import { StreamToBuffer } from "../../helpers/file/StreamToBuffer"
 import { BatchProcessTask, BatchProcessor } from "../../helpers/concurrency/BatchProcessor"
 import { UploadMultipartPartInput, InitiateMultipartUploadInput } from "aws-sdk/clients/glacier"
+import { ILogger } from "../../helpers/logger/Logger"
 
 @injectable()
 export class GlacierMultipartUpload implements IGlacierUploadStrategy {
@@ -14,17 +15,20 @@ export class GlacierMultipartUpload implements IGlacierUploadStrategy {
   private glacier: Glacier
   private streamToBuffer: StreamToBuffer
   private batchProcessor: BatchProcessor
+  private logger: ILogger
 
   public constructor(
     @inject(TYPES.AppConfig) config: AppConfig,
     @inject(TYPES.Glacier) glacier: Glacier,
     @inject(TYPES.StreamToBuffer) streamToBuffer: StreamToBuffer,
     @inject(TYPES.BatchProcessor) batchProcessor: BatchProcessor,
+    @inject(TYPES.Logger) logger: ILogger
   ) {
     this.config = config
     this.glacier = glacier
     this.streamToBuffer = streamToBuffer
     this.batchProcessor = batchProcessor
+    this.logger = logger
   }
 
   public async upload(parts: UploadPart[], treeHash: string): Promise<GlacierUploadResult> {
@@ -71,7 +75,7 @@ export class GlacierMultipartUpload implements IGlacierUploadStrategy {
     })
 
     try {
-      await this.batchProcessor(uploadTasks, this.config.concurrency)
+      await this.batchProcessor(uploadTasks, this.config.concurrency, this.logger)
     } catch (err) {
       throw new GlacierPartsUploadFailed(err.message)
     }

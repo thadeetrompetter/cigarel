@@ -1,7 +1,11 @@
+import { LogLevel } from "../../helpers/logger/Logger"
+
 export interface AppConfig {
   chunkSize: number
   concurrency: number
   vaultName: string
+  dryRun: boolean
+  logLevel: LogLevel
   description?: string
 }
 
@@ -12,19 +16,26 @@ export type ConfigInput = Partial<Omit<AppConfig, "chunkSize"> & {
 export class Config implements AppConfig {
   private static readonly concurrency = 5
   private static readonly vaultName = "my-vault"
+  private static readonly logLevel = "info"
   private static readonly defaultChunkSizeMB = 1
+  private static readonly dryRun = false
+
   public readonly defaultChunkSize = 1024 * 1024
   public readonly maxParts = 1e4
   public readonly chunkSize: number
   public readonly concurrency: number
   public readonly vaultName: string
+  public readonly dryRun: boolean
   public readonly description?: string
+  public readonly logLevel: LogLevel
   private readonly maxChunkSize = this.defaultChunkSize * 1024 * 4
 
   public constructor(config: ConfigInput = {}) {
     this.chunkSize = this.getChunkSize(config.fileSizeInMB)
     this.concurrency = config.concurrency || Config.concurrency
     this.vaultName = config.vaultName || Config.vaultName
+    this.logLevel = config.logLevel || Config.logLevel
+    this.dryRun = config.dryRun ?? Config.dryRun
 
     const { description } = config
 
