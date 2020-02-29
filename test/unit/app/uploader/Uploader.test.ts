@@ -6,16 +6,18 @@ import { IFileHelper, FileInfo } from "../../../../src/helpers/file/FileHelper"
 import { IUploadJobCreator, UploadJob, UploadType } from "../../../../src/app/upload-job-creator/UploadJobCreator"
 import { GlacierSingleUpload } from "../../../../src/services/GlacierUploader/GlacierSingleUpload"
 import { GlacierMultipartUpload } from "../../../../src/services/GlacierUploader/GlacierMultipartUpload"
+import { GlacierStubUpload } from "../../../../src/services/GlacierUploader/GlacierStubUpload"
 import { Uploader, UploaderError, UploaderMaxPartsError, UploaderEmptyFileError } from "../../../../src/app/uploader/Uploader"
 import { ILogger } from "../../../../src/helpers/logger/Logger"
 
 describe("Uploader", () => {
-  const config = Mock.ofType<AppConfig>()
+  const config = Mock.ofType<AppConfig>(undefined, MockBehavior.Strict)
   const uploadService = Mock.ofType<IGlacierUploader>()
   const fileHelper = Mock.ofType<IFileHelper>()
   const uploadJobCreator = Mock.ofType<IUploadJobCreator>()
   const glacierSingleStrategy = Mock.ofType<GlacierSingleUpload>()
   const glacierMultipartStrategy = Mock.ofType<GlacierMultipartUpload>()
+  const glacierStubStrategy = Mock.ofType<GlacierStubUpload>()
   const fileInfo = Mock.ofType<FileInfo>()
   const uploadJob = Mock.ofType<UploadJob>()
   const uploadResult = Mock.ofType<GlacierUploadResult>()
@@ -30,6 +32,7 @@ describe("Uploader", () => {
     uploadJobCreator.object,
     glacierSingleStrategy.object,
     glacierMultipartStrategy.object,
+    glacierStubStrategy.object,
     logger.object
   )
 
@@ -154,6 +157,10 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
   ): void {
     config.setup(c => c.chunkSize)
       .returns(() => chunkSize)
+      .verifiable(Times.once())
+
+    config.setup(c => c.dryRun)
+      .returns(() => false)
       .verifiable(Times.once())
 
     fileInfo.setup(f => f.size)

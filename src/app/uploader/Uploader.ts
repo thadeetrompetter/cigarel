@@ -22,6 +22,7 @@ export class Uploader implements IUploader {
   private uploadJobCreator: IUploadJobCreator
   private singleUploadStrategy: IGlacierUploadStrategy
   private multipartUploadStrategy: IGlacierUploadStrategy
+  private stubUploadStrategy: IGlacierUploadStrategy
   private logger: ILogger
 
   public constructor(
@@ -31,6 +32,7 @@ export class Uploader implements IUploader {
     @inject(TYPES.IUploadJobCreator) uploadJobCreator: IUploadJobCreator,
     @inject(TYPES.GlacierSingleStrategy) singleUploadStrategy: IGlacierUploadStrategy,
     @inject(TYPES.GlacierMultipartStrategy) multipartUploadStrategy: IGlacierUploadStrategy,
+    @inject(TYPES.GlacierStubStrategy) stubUploadStrategy: IGlacierUploadStrategy,
     @inject(TYPES.Logger) logger: ILogger
   ) {
     this.config = config
@@ -39,6 +41,7 @@ export class Uploader implements IUploader {
     this.uploadJobCreator = uploadJobCreator
     this.singleUploadStrategy = singleUploadStrategy
     this.multipartUploadStrategy = multipartUploadStrategy
+    this.stubUploadStrategy = stubUploadStrategy
     this.logger = logger
   }
 
@@ -63,6 +66,11 @@ export class Uploader implements IUploader {
   }
 
   private setUploadStrategy(uploadType: UploadType): void {
+    if (this.config.dryRun) {
+      this.uploadService.setStrategy(this.stubUploadStrategy)
+      return
+    }
+
     switch (uploadType) {
     case "single":
       this.uploadService.setStrategy(this.singleUploadStrategy)
