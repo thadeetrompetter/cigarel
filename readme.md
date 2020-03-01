@@ -1,4 +1,4 @@
-# ragicle
+# cigarel
 Upload files to Amazon S3 Glacier
 
 ## TODO

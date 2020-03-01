@@ -1,5 +1,5 @@
 {
-  "name": "ice3",
+  "name": "cigarel",
   "version": "1.0.0",
   "description": "Glacier archive utility",
   "main": "src/app/App.ts",
@@ -10,7 +10,7 @@
     "test:watch": "jest --watchAll",
     "lint": "eslint \"{src,test}/**/*.ts\"",
     "coverage:serve": "serve ./coverage/lcov-report",
-    "pkg": "npm run build && pkg -t node12-macos ./dist/cmd/index.js -c ./package.json -o ./bin/ragicle"
+    "pkg": "npm run build && pkg -t node12-macos ./dist/cmd/index.js -c ./package.json -o ./bin/cigarel"
   },
   "author": "thadeetrompetter",
   "license": "ISC",
