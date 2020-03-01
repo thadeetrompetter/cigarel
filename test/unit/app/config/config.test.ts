@@ -80,4 +80,25 @@ describe("Config", () => {
 
     expect(config.dryRun).toBe(false)
   })
+
+  it("will set a vault name", () => {
+    const vaultName = "my-custom-vault"
+    const config = new Config(validator, { vaultName })
+
+    expect(config.vaultName).toBe(vaultName)
+  })
+
+  it("will throw if input schema validation fails", () => {
+    validationFn.mockReturnValueOnce({
+      valid: false,
+      errors: [
+        "this is not ok",
+        "this is also not ok, but not shown"
+      ]
+    })
+
+    expect(() => {
+      new Config(validator, {})
+    }).toThrowError(new ConfigError("this is not ok"))
+  })
 })

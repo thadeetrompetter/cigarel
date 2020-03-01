@@ -38,4 +38,6 @@ yargs
     describe: "skip the actual file upload.",
     type: "boolean"
   })
+  .help()
+  .demandCommand(1, "Please specify a command.")
   .argv

@@ -16,7 +16,7 @@ import { Validator, IValidator } from "../app/config/validator"
 import { GlacierStubUpload } from "../services/GlacierUploader/GlacierStubUpload"
 
 export class Bootstrap {
-  private container: Container
+  private readonly container: Container
 
   constructor () {
     this.container = new Container()

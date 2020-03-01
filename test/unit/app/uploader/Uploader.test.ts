@@ -79,6 +79,23 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
     .toEqual({ archiveId })
 })
 
+  it("will set a stub upload strategy", async () => {
+    const chunkSize = 5
+    const fileSize = 15
+    const archiveId = "archive id"
+    setUpUploadMocks("single", chunkSize, fileSize, archiveId, glacierStubStrategy.object, true)
+
+    logger.setup(l => l.debug("Using stub file upload strategy"))
+      .verifiable(Times.once())
+
+    logger.setup(l => l.info(`Successfully uploaded ${filePath} of ${fileSize} Bytes to Glacier.`))
+      .verifiable(Times.once())
+
+    await expect(uploader.upload(filePath))
+      .resolves
+      .toEqual({ archiveId })
+  })
+
   it("will throw an error if an unknown upload strategy is provided", async () => {
     const chunkSize = 5
     const fileSize = 15
@@ -154,13 +171,14 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
     fileSize: number,
     archiveId: string,
     uploadStrategy: IGlacierUploadStrategy,
+    dryRun = false
   ): void {
     config.setup(c => c.chunkSize)
       .returns(() => chunkSize)
       .verifiable(Times.once())
 
     config.setup(c => c.dryRun)
-      .returns(() => false)
+      .returns(() => dryRun)
       .verifiable(Times.once())
 
     fileInfo.setup(f => f.size)
