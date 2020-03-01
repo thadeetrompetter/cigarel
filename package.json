@@ -1,17 +1,18 @@
 {
   "name": "ice3",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Glacier archive utility",
+  "main": "src/app/App.ts",
   "scripts": {
     "prebuild": "rimraf ./dist",
     "build": "tsc",
     "test": "jest --no-cache --coverage",
     "test:watch": "jest --watchAll",
     "lint": "eslint \"{src,test}/**/*.ts\"",
-    "coverage:serve": "serve ./coverage/lcov-report"
+    "coverage:serve": "serve ./coverage/lcov-report",
+    "pkg": "npm run build && pkg -t node12-macos ./dist/cmd/index.js -c ./package.json -o ./bin/ragicle"
   },
-  "author": "",
+  "author": "thadeetrompetter",
   "license": "ISC",
   "husky": {
     "hooks": {
@@ -29,6 +30,7 @@
     "eslint": "^6.7.2",
     "husky": "^3.1.0",
     "jest": "^24.9.0",
+    "pkg": "^4.4.3",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.1",
     "serve": "^11.3.0",
