@@ -2,7 +2,7 @@ import yargs from "yargs"
 import { App } from "../src/app/App"
 
 yargs
-  .scriptName("ragicle")
+  .scriptName("cigarel")
   .usage("Usage: $0 <cmd> [options]")
   .command("upload <path>", "Upload a file to Glacier", yargs => {
     return yargs.option("description", {
