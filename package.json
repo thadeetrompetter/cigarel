@@ -6,9 +6,10 @@
   "scripts": {
     "prebuild": "rimraf ./dist",
     "build": "tsc",
-    "test": "jest --coverage",
-    "test:watch": "jest --watch",
-    "lint": "eslint \"{src,test}/**/*.ts\""
+    "test": "jest --no-cache --coverage",
+    "test:watch": "jest --watchAll",
+    "lint": "eslint \"{src,test}/**/*.ts\"",
+    "coverage:serve": "serve ./coverage/lcov-report"
   },
   "author": "",
   "license": "ISC",
@@ -30,15 +31,18 @@
     "jest": "^24.9.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.1",
+    "serve": "^11.3.0",
     "ts-jest": "^24.2.0",
     "typemoq": "^2.1.0",
     "typescript": "^3.7.2"
   },
   "dependencies": {
+    "ajv": "^6.12.0",
     "async": "^3.1.0",
     "aws-sdk": "^2.580.0",
     "inversify": "^5.0.1",
     "stream-to-array": "^2.3.0",
-    "winston": "^3.2.1"
+    "winston": "^3.2.1",
+    "yargs": "^15.1.0"
   }
 }

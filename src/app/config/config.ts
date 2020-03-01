@@ -1,4 +1,7 @@
 import { LogLevel } from "../../helpers/logger/Logger"
+import { injectable, inject } from "inversify"
+import { TYPES } from "../../config/types"
+import { IValidator } from "./validator"
 
 export interface AppConfig {
   chunkSize: number
@@ -10,9 +13,10 @@ export interface AppConfig {
 }
 
 export type ConfigInput = Partial<Omit<AppConfig, "chunkSize"> & {
-  fileSizeInMB: number
+  size: number
 }>
 
+@injectable()
 export class Config implements AppConfig {
   private static readonly concurrency = 5
   private static readonly vaultName = "my-vault"
@@ -29,9 +33,17 @@ export class Config implements AppConfig {
   public readonly description?: string
   public readonly logLevel: LogLevel
   private readonly maxChunkSize = this.defaultChunkSize * 1024 * 4
+  private readonly validator: IValidator
 
-  public constructor(config: ConfigInput = {}) {
-    this.chunkSize = this.getChunkSize(config.fileSizeInMB)
+  public constructor(
+    @inject(TYPES.SchemaValidator) validator: IValidator,
+      config: ConfigInput = {}
+  ) {
+    this.validator = validator
+
+    this.validateInput(config)
+
+    this.chunkSize = this.getChunkSize(config.size)
     this.concurrency = config.concurrency || Config.concurrency
     this.vaultName = config.vaultName || Config.vaultName
     this.logLevel = config.logLevel || Config.logLevel
@@ -61,6 +73,13 @@ export class Config implements AppConfig {
     }
 
     return byteSize
+  }
+
+  private validateInput(input: ConfigInput): void {
+    const { valid, errors } = this.validator.validate(input)
+    if (!valid && errors) {
+      throw new ConfigError(errors[0])
+    }
   }
 }
 
