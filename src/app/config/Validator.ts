@@ -1,6 +1,5 @@
 import ajv, { ValidateFunction } from "ajv"
 import { ConfigInput } from "./Config"
-import { injectable } from "inversify"
 
 export interface ValidationResult {
   valid: boolean
@@ -11,7 +10,6 @@ export interface IValidator {
   validate(input: ConfigInput): ValidationResult
 }
 
-@injectable()
 export class Validator implements IValidator {
   private validator: ValidateFunction
   constructor () {
