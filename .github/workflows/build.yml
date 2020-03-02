@@ -18,10 +18,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: use node v12
-      uses: actions/setup-node@1
+    - uses: actions/setup-node@1
       with:
-        node-version: 12.x
+        node-version: '12.x'
     - name: install dependencies
       run: npm ci
     - name: run unit tests
