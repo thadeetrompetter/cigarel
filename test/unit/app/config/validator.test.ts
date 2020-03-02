@@ -1,5 +1,5 @@
 import "reflect-metadata"
-import {Validator} from "../../../../src/app/config/validator"
+import {Validator} from "../../../../src/app/config/Validator"
 import { LogLevel } from "../../../../src/helpers/logger/Logger"
 
 describe("Validator", () => {
