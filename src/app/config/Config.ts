@@ -1,7 +1,7 @@
 import { LogLevel } from "../../helpers/logger/Logger"
 import { injectable, inject } from "inversify"
 import { TYPES } from "../../config/types"
-import { IValidator } from "./validator"
+import { IValidator } from "./Validator"
 
 export interface AppConfig {
   chunkSize: number

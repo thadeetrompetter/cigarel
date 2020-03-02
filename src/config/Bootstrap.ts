@@ -12,7 +12,7 @@ import batchProcess, { BatchProcessor } from "../helpers/concurrency/BatchProces
 import { Uploader } from "../app/uploader/Uploader"
 import { Config, ConfigInput } from "../app/config/Config"
 import { getLogger, ILogger } from "../helpers/logger/Logger"
-import { Validator, IValidator } from "../app/config/validator"
+import { Validator, IValidator } from "../app/config/Validator"
 import { GlacierStubUpload } from "../services/GlacierUploader/GlacierStubUpload"
 
 export class Bootstrap {

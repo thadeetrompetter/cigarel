@@ -1,7 +1,7 @@
 import "reflect-metadata"
 import { Config, ConfigError, ConfigInput } from "../../../../src/app/config/Config"
 import { LogLevel } from "../../../../src/helpers/logger/Logger"
-import { ValidationResult } from "../../../../src/app/config/validator"
+import { ValidationResult } from "../../../../src/app/config/Validator"
 
 const mb = 1024 * 1024
 
