@@ -1,5 +1,6 @@
 import yargs from "yargs"
 import { App } from "../src/app/App"
+import { red } from "chalk"
 
 yargs
   .scriptName("cigarel")
@@ -14,7 +15,7 @@ yargs
     try {
       new App(config).upload(String(config.path))
     } catch (err) {
-      console.error(err.message)
+      console.error(red(err.message))
       process.exit(1)
     }
   })
