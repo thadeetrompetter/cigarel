@@ -1,6 +1,6 @@
 import yargs from "yargs"
 import { App } from "../src/app/App"
-import { red } from "chalk"
+import { green, red } from "chalk"
 
 yargs
   .scriptName("cigarel")
@@ -12,12 +12,12 @@ yargs
       type: "string"
     })
   }, config => {
-    try {
-      new App(config).upload(String(config.path))
-    } catch (err) {
-      console.error(red(err.message))
-      process.exit(1)
-    }
+    new App(config).upload(String(config.path))
+      .then(result => console.info(green(JSON.stringify(result, null, 2))))
+      .catch(err => {
+        console.error(red(err.message))
+        process.exit(1)
+      })
   })
   .option("size", {
     alias: "s",
