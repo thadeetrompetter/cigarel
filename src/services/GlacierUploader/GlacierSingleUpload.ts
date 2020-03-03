@@ -1,5 +1,5 @@
 import { UploadPart } from "../../app/upload-job-creator/UploadJobCreator"
-import { GlacierUploadResult, IGlacierUploadStrategy } from "./GlacierUploader"
+import { GlacierUploadResult, IGlacierUploadStrategy, GlacierUploadArchiveFailed, GlacierArchiveIdMissing } from "./GlacierUploader"
 import { Glacier } from "aws-sdk/clients/all"
 import { AppConfig } from "../../app/config/Config"
 import { injectable, inject } from "inversify"
@@ -65,8 +65,3 @@ export class GlacierSingleUpload implements IGlacierUploadStrategy {
     return params
   }
 }
-
-
-export class GlacierSingleUploadError extends Error {}
-export class GlacierUploadArchiveFailed extends GlacierSingleUploadError {}
-export class GlacierArchiveIdMissing extends GlacierSingleUploadError {}

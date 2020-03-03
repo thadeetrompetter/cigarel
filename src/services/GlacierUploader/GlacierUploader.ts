@@ -34,3 +34,9 @@ export class GlacierUploader implements IGlacierUploader {
 
 class GlacierUploaderError extends Error {}
 export class GlacierUploaderStrategyMissing extends GlacierUploaderError {}
+export class GlacierInitiateUploadFailed extends GlacierUploaderError {}
+export class GlacierPartsUploadFailed extends GlacierUploaderError {}
+export class GlacierCompleteUploadFailed extends GlacierUploaderError {}
+export class GlacierMultipartUploadIdMissing extends GlacierUploaderError {}
+export class GlacierUploadArchiveFailed extends GlacierUploaderError {}
+export class GlacierArchiveIdMissing extends GlacierUploaderError {}

@@ -1,6 +1,6 @@
 import "reflect-metadata"
 import { Mock, Times } from "typemoq"
-import { UploadJobCreator, ReadStreamCreator } from "../../../../src/app/upload-job-creator/UploadJobCreator"
+import { UploadJobCreator, ReadStreamCreator, UploadJobCreatorError } from "../../../../src/app/upload-job-creator/UploadJobCreator"
 import { FileInfo } from "../../../../src/helpers/file/FileHelper"
 import { ReadStream } from "fs"
 import { Glacier } from "aws-sdk/clients/all"
@@ -161,5 +161,41 @@ describe("UploadJobCreator", () => {
           stream: stream.object
         }))
       })
+  })
+
+  it("will throw an UploadJobCreatorError if any error occurred while creating the upload job", () => {
+    const errorMessage = "some error occurred"
+    const error = new Error(errorMessage)
+    glacier.setup(g => g.computeChecksums(fileContents))
+      .throws(error)
+      .verifiable(Times.once())
+
+    const chunkSize = 2
+
+    config.setup(c => c.chunkSize)
+      .returns(() => chunkSize)
+      .verifiable(Times.once())
+
+    // File size is larger than default chunk size
+    fileInfo.setup(f => f.size)
+      .returns(() => chunkSize * 4)
+      .verifiable(Times.once())
+
+    fileInfo.setup(f => f.contents)
+      .returns(() => fileContents)
+      .verifiable(Times.once())
+
+    fileInfo.setup(f => f.path)
+      .returns(() => filepath)
+      .verifiable(Times.once())
+
+    const fileSplitter = new UploadJobCreator(
+      config.object,
+      readStreamCreator.object,
+      glacier.object,
+      logger.object
+    )
+    expect(() => fileSplitter.getUploadJob(fileInfo.object))
+      .toThrowError(new UploadJobCreatorError(errorMessage))
   })
 })

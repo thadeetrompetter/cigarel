@@ -1,5 +1,6 @@
 import yargs from "yargs"
 import { App } from "../src/app/App"
+import { green, red } from "chalk"
 
 yargs
   .scriptName("cigarel")
@@ -12,6 +13,11 @@ yargs
     })
   }, config => {
     new App(config).upload(String(config.path))
+      .then(result => console.info(green(JSON.stringify(result, null, 2))))
+      .catch(err => {
+        console.error(red(err.message))
+        process.exit(1)
+      })
   })
   .option("size", {
     alias: "s",
@@ -30,12 +36,12 @@ yargs
   })
   .option("log-level", {
     alias: "l",
-    describe: "error, warn, info, verbose, debug, silly",
+    describe: "Application log level",
     choices: ["error", "warn", "info", "verbose", "debug", "silly"],
     type: "string"
   })
   .option("dry-run", {
-    describe: "skip the actual file upload.",
+    describe: "Skip the actual file upload.",
     type: "boolean"
   })
   .help()

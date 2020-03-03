@@ -1,10 +1,11 @@
 import { AppConfig } from "../config/Config"
 import { inject, injectable } from "inversify"
 import { TYPES } from "../../config/types"
-import { IGlacierUploader, IGlacierUploadStrategy } from "../../services/GlacierUploader/GlacierUploader"
-import { IUploadJobCreator, UploadType } from "../upload-job-creator/UploadJobCreator"
-import { IFileHelper } from "../../helpers/file/FileHelper"
+import { IGlacierUploader, IGlacierUploadStrategy, GlacierUploaderStrategyMissing, GlacierInitiateUploadFailed, GlacierPartsUploadFailed, GlacierCompleteUploadFailed, GlacierMultipartUploadIdMissing, GlacierUploadArchiveFailed, GlacierArchiveIdMissing } from "../../services/GlacierUploader/GlacierUploader"
+import { IUploadJobCreator, UploadType, UploadJobCreatorError } from "../upload-job-creator/UploadJobCreator"
+import { IFileHelper, FileHelperError } from "../../helpers/file/FileHelper"
 import { ILogger } from "../../helpers/logger/Logger"
+import { ErrorMessages, UploaderUnknownStrategyError, UploaderEmptyFileError, UploaderMaxPartsError, UploaderError } from "./UploaderErrors"
 
 export interface IUploader {
   upload(filepath: string): Promise<UploadResult>
@@ -46,22 +47,26 @@ export class Uploader implements IUploader {
   }
 
   public async upload(filepath: string): Promise<UploadResult> {
-    const fileInfo = await this.fileHelper.read(filepath)
+    try {
+      const fileInfo = await this.fileHelper.read(filepath)
 
-    const size = fileInfo.size
+      const size = fileInfo.size
 
-    this.checkFileSize(size)
+      this.checkFileSize(size)
 
-    const uploadJob = this.uploadJobCreator.getUploadJob(fileInfo)
+      const uploadJob = this.uploadJobCreator.getUploadJob(fileInfo)
 
-    this.setUploadStrategy(uploadJob.kind)
+      this.setUploadStrategy(uploadJob.kind)
 
-    const result = await this.uploadService.upload(uploadJob)
+      const result = await this.uploadService.upload(uploadJob)
 
-    this.logger.info(`Successfully uploaded ${filepath} of ${size} Bytes to Glacier.`)
+      this.logger.info(`Successfully uploaded ${filepath} of ${size} Bytes to Glacier.`)
 
-    return {
-      archiveId: result.archiveId
+      return {
+        archiveId: result.archiveId
+      }
+    } catch (err) {
+      throw Uploader.fromError(err)
     }
   }
 
@@ -80,7 +85,7 @@ export class Uploader implements IUploader {
       this.uploadService.setStrategy(this.multipartUploadStrategy)
       break
     default:
-      throw new UploaderError("unknown upload strategy selected")
+      throw new UploaderUnknownStrategyError()
     }
     this.logger.debug(`Using ${uploadType} file upload strategy`)
   }
@@ -105,8 +110,35 @@ export class Uploader implements IUploader {
       throw new UploaderMaxPartsError()
     }
   }
-}
 
-export class UploaderError extends Error {}
-export class UploaderMaxPartsError extends UploaderError {}
-export class UploaderEmptyFileError extends UploaderError {}
+  public static fromError(err: Error): UploaderError {
+    switch (true) {
+    case err instanceof UploaderUnknownStrategyError:
+      return new UploaderError(ErrorMessages.unknownUploadStrategy)
+    case err instanceof UploaderMaxPartsError:
+      return new UploaderError(ErrorMessages.maxUploadParts)
+    case err instanceof UploaderEmptyFileError:
+      return new UploaderError(ErrorMessages.emptyFile)
+    case err instanceof FileHelperError:
+      return new UploaderError(`${ErrorMessages.fileHelper}. ${err.message}`)
+    case err instanceof GlacierUploaderStrategyMissing:
+      return new UploaderError(ErrorMessages.noUploadStrategy)
+    case err instanceof GlacierInitiateUploadFailed:
+      return new UploaderError(`${ErrorMessages.initiateUpload}. ${err.message}`)
+    case err instanceof GlacierPartsUploadFailed:
+      return new UploaderError(`${ErrorMessages.partUpload}. ${err.message}`)
+    case err instanceof GlacierCompleteUploadFailed:
+      return new UploaderError(`${ErrorMessages.completeUpload}. ${err.message}`)
+    case err instanceof GlacierMultipartUploadIdMissing:
+      return new UploaderError(ErrorMessages.uploadId)
+    case err instanceof GlacierUploadArchiveFailed:
+      return new UploaderError(`${ErrorMessages.archiveUpload}. ${err.message}`)
+    case err instanceof GlacierArchiveIdMissing:
+      return new UploaderError(ErrorMessages.archiveId)
+    case err instanceof UploadJobCreatorError:
+      return new UploaderError(`${ErrorMessages.jobCreation}. ${err.message}`)
+    default:
+      return new UploaderError(`${ErrorMessages.unknown}. ${err.message}`)
+    }
+  }
+}

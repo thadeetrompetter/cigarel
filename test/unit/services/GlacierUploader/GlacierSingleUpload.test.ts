@@ -3,10 +3,11 @@ import { IMock, Mock, Times } from "typemoq"
 import AWS from "aws-sdk"
 import AWSMock from "aws-sdk-mock"
 import { AppConfig } from "../../../../src/app/config/Config"
-import { GlacierSingleUpload, GlacierUploadArchiveFailed, GlacierArchiveIdMissing } from "../../../../src/services/GlacierUploader/GlacierSingleUpload"
+import { GlacierSingleUpload } from "../../../../src/services/GlacierUploader/GlacierSingleUpload"
 import { UploadPart } from "../../../../src/app/upload-job-creator/UploadJobCreator"
 import { ReadStream } from "fs"
 import { StreamToBuffer, streamToBuffer as streamToBufferHelper } from "../../../../src/helpers/file/StreamToBuffer"
+import { GlacierUploadArchiveFailed, GlacierArchiveIdMissing } from "../../../../src/services/GlacierUploader/GlacierUploader"
 
 describe("GlacierSingleUpload", () => {
   AWSMock.setSDKInstance(AWS)
@@ -69,7 +70,7 @@ describe("GlacierSingleUpload", () => {
     })
   })
 
-  it("will throw a GlacierSingleUploadError if file cannot be uploaded", async () => {
+  it("will throw a GlacierUploadArchiveFailed if file cannot be uploaded", async () => {
     const vaultName = "vault name"
     const treeHash = "tree hash"
     const errorMessage = "A Glacier upload error occurred"

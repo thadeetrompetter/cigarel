@@ -48,14 +48,19 @@ export class UploadJobCreator implements IUploadJobCreator {
   }
 
   public getUploadJob (fileInfo: FileInfo): UploadJob {
-    const parts = this.createUploadParts(fileInfo)
-    const kind = parts.length > 1 ? "multipart" : "single"
-    const treeHash = this.calculateHashForFile(fileInfo)
-    this.logUploadJob(kind, parts.length)
+    try {
+      const parts = this.createUploadParts(fileInfo)
+      const kind = parts.length > 1 ? "multipart" : "single"
+      const treeHash = this.calculateHashForFile(fileInfo)
+      this.logUploadJob(kind, parts.length)
 
-    this.logger.debug(`Calculated treehash ${treeHash} for file ${fileInfo.path}`)
+      this.logger.debug(`Calculated treehash ${treeHash} for file ${fileInfo.path}`)
 
-    return { kind, treeHash, parts }
+      return { kind, treeHash, parts }
+    } catch (err) {
+      throw new UploadJobCreatorError(err.message)
+    }
+
   }
 
   private createUploadParts ({ path, size }: FileInfo): UploadPart[] {
@@ -102,3 +107,5 @@ export class UploadJobCreator implements IUploadJobCreator {
     this.logger.debug(line)
   }
 }
+
+export class UploadJobCreatorError extends Error {}
