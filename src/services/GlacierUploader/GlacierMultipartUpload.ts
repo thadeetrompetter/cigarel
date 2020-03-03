@@ -1,5 +1,13 @@
 import { UploadPart } from "../../app/upload-job-creator/UploadJobCreator"
-import { GlacierUploadResult, IGlacierUploadStrategy } from "./GlacierUploader"
+import {
+  GlacierUploadResult,
+  IGlacierUploadStrategy,
+  GlacierInitiateUploadFailed,
+  GlacierMultipartUploadIdMissing,
+  GlacierPartsUploadFailed,
+  GlacierCompleteUploadFailed,
+  GlacierArchiveIdMissing
+} from "./GlacierUploader"
 import { Glacier } from "aws-sdk/clients/all"
 import { AppConfig } from "../../app/config/Config"
 import { injectable, inject } from "inversify"
@@ -97,7 +105,7 @@ export class GlacierMultipartUpload implements IGlacierUploadStrategy {
     }
 
     if (!archiveId) {
-      throw new GlacierMultipartArchiveIdMissing()
+      throw new GlacierArchiveIdMissing()
     }
 
     return archiveId
@@ -129,10 +137,3 @@ export class GlacierMultipartUpload implements IGlacierUploadStrategy {
     }
   }
 }
-
-export class GlacierMultipartUploadError extends Error {}
-export class GlacierInitiateUploadFailed extends GlacierMultipartUploadError {}
-export class GlacierPartsUploadFailed extends GlacierMultipartUploadError {}
-export class GlacierCompleteUploadFailed extends GlacierMultipartUploadError {}
-export class GlacierMultipartUploadIdMissing extends GlacierMultipartUploadError {}
-export class GlacierMultipartArchiveIdMissing extends GlacierMultipartUploadError {}

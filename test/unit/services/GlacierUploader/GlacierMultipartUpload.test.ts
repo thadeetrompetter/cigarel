@@ -3,11 +3,6 @@ import AWSMock from "aws-sdk-mock"
 import AWS from "aws-sdk"
 import {
   GlacierMultipartUpload,
-  GlacierInitiateUploadFailed,
-  GlacierMultipartUploadIdMissing,
-  GlacierPartsUploadFailed,
-  GlacierCompleteUploadFailed,
-  GlacierMultipartArchiveIdMissing
 } from "../../../../src/services/GlacierUploader/GlacierMultipartUpload"
 import { Mock, Times, IMock, MockBehavior } from "typemoq"
 import { AppConfig } from "../../../../src/app/config/Config"
@@ -23,6 +18,7 @@ import { UploadPart } from "../../../../src/app/upload-job-creator/UploadJobCrea
 import { ReadStream, createReadStream } from "fs"
 import batchProcessor from "../../../../src/helpers/concurrency/BatchProcessor"
 import { ILogger } from "../../../../src/helpers/logger/Logger"
+import { GlacierInitiateUploadFailed, GlacierMultipartUploadIdMissing, GlacierPartsUploadFailed, GlacierCompleteUploadFailed, GlacierArchiveIdMissing } from "../../../../src/services/GlacierUploader/GlacierUploader"
 
 interface GetUploadPartOutput {
   part: IMock<UploadPart>
@@ -227,8 +223,8 @@ describe("GlacierMultipartUpload", () => {
       .toThrowError(error)
   })
 
-  it("will throw a GlacierMultipartArchiveIdMissing if archive ID is missing in complete upload response", async () => {
-    const error = new GlacierMultipartArchiveIdMissing()
+  it("will throw a GlacierArchiveIdMissing if archive ID is missing in complete upload response", async () => {
+    const error = new GlacierArchiveIdMissing()
 
     AWSMock.mock("Glacier", "initiateMultipartUpload", Promise.resolve(initResult))
     AWSMock.mock("Glacier", "uploadMultipartPart", Promise.resolve(uploadMultipartResult))

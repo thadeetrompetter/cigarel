@@ -37,9 +37,14 @@ export class FileHelper implements IFileHelper {
         path: p,
         size: contents.length
       }))
+      .catch(err => {
+        throw new FileHelperError(err.message)
+      })
   }
 
   private getFilePath (path: string): string {
     return isAbsolute(path) ? path : resolve(this.workDir, path)
   }
 }
+
+export class FileHelperError extends Error {}

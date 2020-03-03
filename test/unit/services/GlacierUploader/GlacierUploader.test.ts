@@ -2,7 +2,7 @@ import "reflect-metadata"
 import { GlacierUploader, IGlacierUploadStrategy, GlacierUploaderStrategyMissing } from "../../../../src/services/GlacierUploader/GlacierUploader"
 import { Mock, Times } from "typemoq"
 import { UploadPart, UploadJob } from "../../../../src/app/upload-job-creator/UploadJobCreator"
-import { GlacierSingleUploadError } from "../../../../src/services/GlacierUploader/GlacierSingleUpload"
+import { GlacierUploadArchiveFailed } from "../../../../src/services/GlacierUploader/GlacierUploader"
 
 describe("GlacierUploader", () => {
   const treeHash = "tree hash"
@@ -52,11 +52,11 @@ describe("GlacierUploader", () => {
     setUpMocks()
 
     strategy.setup(s => s.upload(uploadJob.object.parts, uploadJob.object.treeHash))
-      .returns(() => Promise.reject(new GlacierSingleUploadError()))
+      .returns(() => Promise.reject(new GlacierUploadArchiveFailed()))
 
     await expect(glacierUploader.upload(uploadJob.object))
       .rejects
-      .toThrow(new GlacierSingleUploadError())
+      .toThrow(new GlacierUploadArchiveFailed())
   })
 
   function setUpMocks(): void {

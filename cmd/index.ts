@@ -11,7 +11,12 @@ yargs
       type: "string"
     })
   }, config => {
-    new App(config).upload(String(config.path))
+    try {
+      new App(config).upload(String(config.path))
+    } catch (err) {
+      console.error(err.message)
+      process.exit(1)
+    }
   })
   .option("size", {
     alias: "s",
@@ -30,12 +35,12 @@ yargs
   })
   .option("log-level", {
     alias: "l",
-    describe: "error, warn, info, verbose, debug, silly",
+    describe: "Application log level",
     choices: ["error", "warn", "info", "verbose", "debug", "silly"],
     type: "string"
   })
   .option("dry-run", {
-    describe: "skip the actual file upload.",
+    describe: "Skip the actual file upload.",
     type: "boolean"
   })
   .help()

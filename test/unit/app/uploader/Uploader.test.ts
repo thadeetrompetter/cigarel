@@ -1,14 +1,15 @@
 import "reflect-metadata"
 import { Mock, Times, MockBehavior } from "typemoq"
 import { AppConfig } from "../../../../src/app/config/Config"
-import { IGlacierUploader, GlacierUploadResult, IGlacierUploadStrategy } from "../../../../src/services/GlacierUploader/GlacierUploader"
-import { IFileHelper, FileInfo } from "../../../../src/helpers/file/FileHelper"
-import { IUploadJobCreator, UploadJob, UploadType } from "../../../../src/app/upload-job-creator/UploadJobCreator"
+import { IGlacierUploader, GlacierUploadResult, IGlacierUploadStrategy, GlacierUploaderStrategyMissing, GlacierInitiateUploadFailed, GlacierPartsUploadFailed, GlacierCompleteUploadFailed, GlacierMultipartUploadIdMissing, GlacierUploadArchiveFailed, GlacierArchiveIdMissing } from "../../../../src/services/GlacierUploader/GlacierUploader"
+import { IFileHelper, FileInfo, FileHelperError } from "../../../../src/helpers/file/FileHelper"
+import { IUploadJobCreator, UploadJob, UploadType, UploadJobCreatorError } from "../../../../src/app/upload-job-creator/UploadJobCreator"
 import { GlacierSingleUpload } from "../../../../src/services/GlacierUploader/GlacierSingleUpload"
 import { GlacierMultipartUpload } from "../../../../src/services/GlacierUploader/GlacierMultipartUpload"
 import { GlacierStubUpload } from "../../../../src/services/GlacierUploader/GlacierStubUpload"
-import { Uploader, UploaderError, UploaderMaxPartsError, UploaderEmptyFileError } from "../../../../src/app/uploader/Uploader"
+import { Uploader } from "../../../../src/app/uploader/Uploader"
 import { ILogger } from "../../../../src/helpers/logger/Logger"
+import { UploaderError, ErrorMessages, UploaderUnknownStrategyError } from "../../../../src/app/uploader/UploaderErrors"
 
 describe("Uploader", () => {
   const config = Mock.ofType<AppConfig>(undefined, MockBehavior.Strict)
@@ -100,7 +101,7 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
     const chunkSize = 5
     const fileSize = 15
     const archiveId = "archive id"
-    const error = new UploaderError("unknown upload strategy selected")
+    const error = new UploaderError(ErrorMessages.unknownUploadStrategy)
 
     setUpUploadMocks(
       "foo bar" as UploadType,
@@ -122,7 +123,7 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
     const chunkSize = 2
     // more than 10.000 chunks to upload
     const fileSize = 1e4 * 2 + 1
-    const error = new UploaderMaxPartsError()
+    const error = new UploaderError(ErrorMessages.maxUploadParts)
 
     config.setup(c => c.chunkSize)
       .returns(() => chunkSize)
@@ -147,7 +148,7 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
   it("will throw a UploaderEmptyFileError error if file to upload is empty", async () => {
     // empty file
     const fileSize = 0
-    const error = new UploaderEmptyFileError()
+    const error = new UploaderError(ErrorMessages.emptyFile)
 
     fileInfo.setup(f => f.size)
       .returns(() => fileSize)
@@ -164,6 +165,39 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
       .rejects
       .toThrowError(error)
   })
+
+  it.each`name | error | result
+  ${"UploaderUnknownStrategyError"} | ${new UploaderUnknownStrategyError()} | ${new UploaderError(ErrorMessages.unknownUploadStrategy)}}
+  ${"FileHelperError"} | ${new FileHelperError("test")} | ${new UploaderError(`${ErrorMessages.fileHelper}. test`)}}
+  ${"GlacierUploaderStrategyMissing"} | ${new GlacierUploaderStrategyMissing()} | ${new UploaderError(ErrorMessages.noUploadStrategy)}}
+  ${"GlacierInitiateUploadFailed"} | ${new GlacierInitiateUploadFailed("test")} | ${new UploaderError(`${ErrorMessages.initiateUpload}. test`)}}
+  ${"GlacierPartsUploadFailed"} | ${new GlacierPartsUploadFailed("test")} | ${new UploaderError(`${ErrorMessages.partUpload}. test`)}}
+  ${"GlacierCompleteUploadFailed"} | ${new GlacierCompleteUploadFailed("test")} | ${new UploaderError(`${ErrorMessages.completeUpload}. test`)}}
+  ${"GlacierMultipartUploadIdMissing"} | ${new GlacierMultipartUploadIdMissing()} | ${new UploaderError(ErrorMessages.uploadId)}}
+  ${"GlacierUploadArchiveFailed"} | ${new GlacierUploadArchiveFailed("test")} | ${new UploaderError(`${ErrorMessages.archiveUpload}. test`)}}
+  ${"GlacierArchiveIdMissing"} | ${new GlacierArchiveIdMissing()} | ${new UploaderError(ErrorMessages.archiveId)}}
+  ${"UploadJobCreatorError"} | ${new UploadJobCreatorError("test")} | ${new UploaderError(`${ErrorMessages.jobCreation}. test`)}}
+  ${"Unknown error"} | ${new Error("test")} | ${new UploaderError(`${ErrorMessages.unknown}. test`)}}
+  `("will throw an UploaderError when $name occurs", async ({ error, result }) => {
+  const fileReaderMockFunc = jest.fn()
+  const fileReaderMock = { read: fileReaderMockFunc }
+  fileReaderMockFunc.mockImplementation(() => { throw error })
+
+  const uploader = new Uploader(
+    config.object,
+    uploadService.object,
+    fileReaderMock,
+    uploadJobCreator.object,
+    glacierSingleStrategy.object,
+    glacierMultipartStrategy.object,
+    glacierStubStrategy.object,
+    logger.object
+  )
+
+  await expect(uploader.upload(filePath))
+    .rejects
+    .toThrowError(result)
+})
 
   function setUpUploadMocks(
     uploadType: UploadType,
