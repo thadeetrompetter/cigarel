@@ -1,6 +1,7 @@
 import yargs from "yargs"
 import { App } from "../src/app/App"
 import { green, red } from "chalk"
+import { Validator } from "../src/app/config/Validator"
 
 yargs
   .scriptName("cigarel")
@@ -38,6 +39,12 @@ yargs
     alias: "l",
     describe: "Application log level",
     choices: ["error", "warn", "info", "verbose", "debug", "silly"],
+    type: "string"
+  })
+  .option("region", {
+    alias: "r",
+    describe: "AWS region to interact with, default: eu-central-1",
+    choices: Validator.regions,
     type: "string"
   })
   .option("dry-run", {

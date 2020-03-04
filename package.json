@@ -6,6 +6,7 @@
   "scripts": {
     "prebuild": "rimraf ./dist",
     "build": "tsc",
+    "dev": "ts-node cmd/index.ts",
     "test": "jest --no-cache --coverage",
     "test:watch": "jest --watchAll",
     "lint": "eslint \"{src,test}/**/*.ts\"",
@@ -35,6 +36,7 @@
     "rimraf": "^3.0.1",
     "serve": "^11.3.0",
     "ts-jest": "^24.2.0",
+    "ts-node": "^8.6.2",
     "typemoq": "^2.1.0",
     "typescript": "^3.7.2"
   },
