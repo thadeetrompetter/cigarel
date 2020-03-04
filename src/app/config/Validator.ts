@@ -20,6 +20,7 @@ export class Validator implements IValidator {
 
   public validate(input: ConfigInput): ValidationResult {
     const result = this.validator(input)
+
     return {
       valid: result as boolean,
       errors: this.getErrorsFromValidator()
@@ -31,6 +32,7 @@ export class Validator implements IValidator {
     if (!errors) {
       return []
     }
+
     return errors.map<string>(error =>
       `${error.dataPath.slice(1)}: ${error.message}`
     )
