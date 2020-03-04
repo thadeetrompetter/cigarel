@@ -113,6 +113,7 @@ export class GlacierMultipartUpload implements IGlacierUploadStrategy {
 
   private getTotalSize(parts: UploadPart[]): number {
     const [{ end:size }] = parts.slice(parts.length - 1)
+
     return size + 1
   }
 
@@ -124,6 +125,7 @@ export class GlacierMultipartUpload implements IGlacierUploadStrategy {
 
   private createUploadTask(part: UploadPart, index: number, taskParams: UploadMultipartPartInput): BatchProcessTask {
     const { stream, start, end } = part
+
     return {
       id: `${index + 1}: ${start}-${end}`,
       work: async (): Promise<void> => {

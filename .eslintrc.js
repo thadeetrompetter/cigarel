@@ -74,6 +74,10 @@ module.exports = {
         "no-var": "error",
         "prefer-const": "error",
         "prefer-rest-params": "error",
-        "prefer-spread": "error"
+        "prefer-spread": "error",
+        "padding-line-between-statements": [
+          "error",
+          { blankLine: "always", prev: "*", next: "return" }
+      ]
     }
 }

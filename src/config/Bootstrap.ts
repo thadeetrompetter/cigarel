@@ -44,9 +44,12 @@ export class Bootstrap {
     this.container.bind<StreamToBuffer>(TYPES.StreamToBuffer).toFunction(streamToBuffer)
 
     // Glacier AWS service
-    this.container.bind<Glacier>(TYPES.Glacier).toDynamicValue(() => {
-      return new Glacier({ apiVersion: "2012-06-01", region: "eu-central-1" })
-    })
+    this.container.bind<Glacier>(TYPES.Glacier).toDynamicValue(({ container }) => {
+      const region = container.get<Config>(TYPES.AppConfig).region
+      container.get<ILogger>(TYPES.Logger).debug(`set up AWS Glacier for region ${region}`)
+
+      return new Glacier({ apiVersion: "2012-06-01", region })
+    }).inSingletonScope()
 
     // Glacier upload service
     this.container.bind<IGlacierUploader>(TYPES.IGlacierUploader).to(GlacierUploader)

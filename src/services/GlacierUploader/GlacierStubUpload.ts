@@ -14,6 +14,7 @@ export class GlacierStubUpload implements IGlacierUploadStrategy{
 
   public async upload(parts: UploadPart[], treeHash: string): Promise<GlacierUploadResult> {
     this.logger.debug(`stub upload ${parts.length} with hash ${treeHash}`)
+
     return { archiveId: "stub" }
   }
 }

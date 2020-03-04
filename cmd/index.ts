@@ -11,13 +11,15 @@ yargs
       describe: "optional archive description",
       type: "string"
     })
-  }, config => {
-    new App(config).upload(String(config.path))
-      .then(result => console.info(green(JSON.stringify(result, null, 2))))
-      .catch(err => {
-        console.error(red(err.message))
-        process.exit(1)
-      })
+  }, async config => {
+    try {
+      const app = new App(config)
+      const result = await app.upload(String(config.path))
+      console.info(green(JSON.stringify(result, null, 2)))
+    } catch (err) {
+      console.error(red(err.message))
+      process.exit(1)
+    }
   })
   .option("size", {
     alias: "s",
@@ -38,6 +40,11 @@ yargs
     alias: "l",
     describe: "Application log level",
     choices: ["error", "warn", "info", "verbose", "debug", "silly"],
+    type: "string"
+  })
+  .option("region", {
+    alias: "r",
+    describe: "AWS region to interact with, default: eu-central-1",
     type: "string"
   })
   .option("dry-run", {

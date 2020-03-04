@@ -31,6 +31,7 @@ export class FileHelper implements IFileHelper {
 
   public async read(path: string): Promise<FileInfo> {
     const p = this.getFilePath(path)
+
     return this.readFile(path)
       .then(contents => ({
         contents,

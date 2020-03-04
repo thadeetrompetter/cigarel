@@ -74,6 +74,7 @@ export class Uploader implements IUploader {
     if (this.config.dryRun) {
       this.uploadService.setStrategy(this.stubUploadStrategy)
       this.logger.debug("Using stub file upload strategy")
+
       return
     }
 
