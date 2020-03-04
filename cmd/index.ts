@@ -1,7 +1,6 @@
 import yargs from "yargs"
 import { App } from "../src/app/App"
 import { green, red } from "chalk"
-import { Validator } from "../src/app/config/Validator"
 
 yargs
   .scriptName("cigarel")
@@ -12,13 +11,15 @@ yargs
       describe: "optional archive description",
       type: "string"
     })
-  }, config => {
-    new App(config).upload(String(config.path))
-      .then(result => console.info(green(JSON.stringify(result, null, 2))))
-      .catch(err => {
-        console.error(red(err.message))
-        process.exit(1)
-      })
+  }, async config => {
+    try {
+      const app = new App(config)
+      const result = await app.upload(String(config.path))
+      console.info(green(JSON.stringify(result, null, 2)))
+    } catch (err) {
+      console.error(red(err.message))
+      process.exit(1)
+    }
   })
   .option("size", {
     alias: "s",
@@ -44,7 +45,6 @@ yargs
   .option("region", {
     alias: "r",
     describe: "AWS region to interact with, default: eu-central-1",
-    choices: Validator.regions,
     type: "string"
   })
   .option("dry-run", {
