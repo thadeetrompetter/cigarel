@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - feat/build
   release:
     types:
       - created
@@ -21,7 +22,16 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: '12.x'
+    - name: cache node dependencies
+      id: cache-npm
+      uses: actions/cache@v1
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
     - name: install dependencies
+      if: steps.cache-npm.outputs.cache-hit != 'true'
       run: npm ci
     - name: run unit tests
       run: npm test
