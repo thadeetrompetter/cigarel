@@ -60,7 +60,7 @@ export class Uploader implements IUploader {
 
       const uploadJob = this.uploadJobCreator.getUploadJob(fileInfo)
 
-      this.vaultCreator.createVault()
+      await this.vaultCreator.createVault()
 
       this.setUploadStrategy(uploadJob.kind)
 
