@@ -51,6 +51,7 @@ yargs
     describe: "Skip the actual file upload.",
     type: "boolean"
   })
-  .help()
+  .help("help")
+  .showHelpOnFail(true)
   .demandCommand(1, "Please specify a command.")
   .argv

@@ -10,12 +10,14 @@ import { GlacierStubUpload } from "../../../../src/services/GlacierUploader/Glac
 import { Uploader } from "../../../../src/app/uploader/Uploader"
 import { ILogger } from "../../../../src/helpers/logger/Logger"
 import { UploaderError, ErrorMessages, UploaderUnknownStrategyError } from "../../../../src/app/uploader/UploaderErrors"
+import { IVaultCreator, VaultCreatorCreationError, VaultCreatorDescribeError } from "../../../../src/services/VaultCreator/VaultCreator"
 
 describe("Uploader", () => {
   const config = Mock.ofType<AppConfig>(undefined, MockBehavior.Strict)
   const uploadService = Mock.ofType<IGlacierUploader>()
   const fileHelper = Mock.ofType<IFileHelper>()
   const uploadJobCreator = Mock.ofType<IUploadJobCreator>()
+  const vaultCreator = Mock.ofType<IVaultCreator>(undefined, MockBehavior.Strict)
   const glacierSingleStrategy = Mock.ofType<GlacierSingleUpload>()
   const glacierMultipartStrategy = Mock.ofType<GlacierMultipartUpload>()
   const glacierStubStrategy = Mock.ofType<GlacierStubUpload>()
@@ -31,6 +33,7 @@ describe("Uploader", () => {
     uploadService.object,
     fileHelper.object,
     uploadJobCreator.object,
+    vaultCreator.object,
     glacierSingleStrategy.object,
     glacierMultipartStrategy.object,
     glacierStubStrategy.object,
@@ -42,6 +45,7 @@ describe("Uploader", () => {
     uploadService.reset()
     fileHelper.reset()
     uploadJobCreator.reset()
+    vaultCreator.reset()
     fileInfo.reset()
     uploadJob.reset()
     uploadResult.reset()
@@ -53,6 +57,7 @@ describe("Uploader", () => {
     uploadService.verifyAll()
     fileHelper.verifyAll()
     uploadJobCreator.verifyAll()
+    vaultCreator.verifyAll()
     fileInfo.verifyAll()
     uploadJob.verifyAll()
     uploadResult.verifyAll()
@@ -177,6 +182,8 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
   ${"GlacierUploadArchiveFailed"} | ${new GlacierUploadArchiveFailed("test")} | ${new UploaderError(`${ErrorMessages.archiveUpload}. test`)}}
   ${"GlacierArchiveIdMissing"} | ${new GlacierArchiveIdMissing()} | ${new UploaderError(ErrorMessages.archiveId)}}
   ${"UploadJobCreatorError"} | ${new UploadJobCreatorError("test")} | ${new UploaderError(`${ErrorMessages.jobCreation}. test`)}}
+  ${"VaultCreatorCreationError"} | ${new VaultCreatorCreationError("test")} | ${new UploaderError(`${ErrorMessages.vaultCreation}. test`)}}
+  ${"VaultCreatorDescribeError"} | ${new VaultCreatorDescribeError("test")} | ${new UploaderError(`${ErrorMessages.vaultDescribe}. test`)}}
   ${"Unknown error"} | ${new Error("test")} | ${new UploaderError(`${ErrorMessages.unknown}. test`)}}
   `("will throw an UploaderError when $name occurs", async ({ error, result }) => {
   const fileReaderMockFunc = jest.fn()
@@ -188,6 +195,7 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
     uploadService.object,
     fileReaderMock,
     uploadJobCreator.object,
+    vaultCreator.object,
     glacierSingleStrategy.object,
     glacierMultipartStrategy.object,
     glacierStubStrategy.object,
@@ -209,43 +217,37 @@ ${"multipart"} | ${glacierMultipartStrategy.object}
   ): void {
     config.setup(c => c.chunkSize)
       .returns(() => chunkSize)
-      .verifiable(Times.once())
 
     config.setup(c => c.dryRun)
       .returns(() => dryRun)
-      .verifiable(Times.once())
 
     fileInfo.setup(f => f.size)
       .returns(() => fileSize)
-      .verifiable(Times.once())
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fileInfo.setup((f: any) => f.then).returns(() => undefined)
 
     fileHelper.setup(f => f.read(filePath))
       .returns(() => Promise.resolve(fileInfo.object))
-      .verifiable(Times.once())
 
     uploadJobCreator.setup(u => u.getUploadJob(fileInfo.object))
       .returns(() => uploadJob.object)
-      .verifiable(Times.once())
 
     uploadJob.setup(u => u.kind)
       .returns(() => uploadType)
-      .verifiable(Times.once())
 
     uploadResult.setup(u => u.archiveId)
       .returns(() => archiveId)
-      .verifiable(Times.once())
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     uploadResult.setup((f: any) => f.then).returns(() => undefined)
 
+    vaultCreator.setup(v => v.createVault())
+      .returns(() => Promise.resolve())
+
     uploadService.setup(u => u.setStrategy(uploadStrategy))
-      .verifiable(Times.once())
 
     uploadService.setup(u => u.upload(uploadJob.object))
       .returns(() => Promise.resolve(uploadResult.object))
-      .verifiable(Times.once())
   }
 })

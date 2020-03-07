@@ -14,5 +14,6 @@ export const TYPES = {
   IUploadJobCreator: Symbol.for("IUploadJobCreator"),
   Uploader: Symbol.for("Uploader"),
   Logger: Symbol.for("Logger"),
-  SchemaValidator: Symbol.for("SchemaValidator")
+  SchemaValidator: Symbol.for("SchemaValidator"),
+  VaultCreator: Symbol.for("VaultCreator")
 }

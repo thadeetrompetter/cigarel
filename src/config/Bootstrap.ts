@@ -14,6 +14,7 @@ import { Config, ConfigInput } from "../app/config/Config"
 import { getLogger, ILogger } from "../helpers/logger/Logger"
 import { Validator, IValidator } from "../app/config/Validator"
 import { GlacierStubUpload } from "../services/GlacierUploader/GlacierStubUpload"
+import { VaultCreator, IVaultCreator } from "../services/VaultCreator/VaultCreator"
 
 export class Bootstrap {
   private readonly container: Container
@@ -61,6 +62,9 @@ export class Bootstrap {
 
     // Upload job creator
     this.container.bind<IUploadJobCreator>(TYPES.IUploadJobCreator).to(UploadJobCreator)
+
+    // Vault creator
+    this.container.bind<IVaultCreator>(TYPES.VaultCreator).to(VaultCreator)
 
     // Uploader
     this.container.bind<Uploader>(TYPES.Uploader).to(Uploader)
