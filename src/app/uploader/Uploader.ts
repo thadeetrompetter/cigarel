@@ -6,6 +6,7 @@ import { IUploadJobCreator, UploadType, UploadJobCreatorError } from "../upload-
 import { IFileHelper, FileHelperError } from "../../helpers/file/FileHelper"
 import { ILogger } from "../../helpers/logger/Logger"
 import { ErrorMessages, UploaderUnknownStrategyError, UploaderEmptyFileError, UploaderMaxPartsError, UploaderError } from "./UploaderErrors"
+import { IVaultCreator, VaultCreatorCreationError, VaultCreatorDescribeError } from "../../services/VaultCreator/VaultCreator"
 
 export interface IUploader {
   upload(filepath: string): Promise<UploadResult>
@@ -21,6 +22,7 @@ export class Uploader implements IUploader {
   private uploadService: IGlacierUploader
   private fileHelper: IFileHelper
   private uploadJobCreator: IUploadJobCreator
+  private vaultCreator: IVaultCreator
   private singleUploadStrategy: IGlacierUploadStrategy
   private multipartUploadStrategy: IGlacierUploadStrategy
   private stubUploadStrategy: IGlacierUploadStrategy
@@ -31,6 +33,7 @@ export class Uploader implements IUploader {
     @inject(TYPES.IGlacierUploader) uploadService: IGlacierUploader,
     @inject(TYPES.FileHelper) fileHelper: IFileHelper,
     @inject(TYPES.IUploadJobCreator) uploadJobCreator: IUploadJobCreator,
+    @inject(TYPES.VaultCreator) vaultCreator: IVaultCreator,
     @inject(TYPES.GlacierSingleStrategy) singleUploadStrategy: IGlacierUploadStrategy,
     @inject(TYPES.GlacierMultipartStrategy) multipartUploadStrategy: IGlacierUploadStrategy,
     @inject(TYPES.GlacierStubStrategy) stubUploadStrategy: IGlacierUploadStrategy,
@@ -40,6 +43,7 @@ export class Uploader implements IUploader {
     this.uploadService = uploadService
     this.fileHelper = fileHelper
     this.uploadJobCreator = uploadJobCreator
+    this.vaultCreator = vaultCreator
     this.singleUploadStrategy = singleUploadStrategy
     this.multipartUploadStrategy = multipartUploadStrategy
     this.stubUploadStrategy = stubUploadStrategy
@@ -55,6 +59,8 @@ export class Uploader implements IUploader {
       this.checkFileSize(size)
 
       const uploadJob = this.uploadJobCreator.getUploadJob(fileInfo)
+
+      this.vaultCreator.createVault()
 
       this.setUploadStrategy(uploadJob.kind)
 
@@ -138,6 +144,10 @@ export class Uploader implements IUploader {
       return new UploaderError(ErrorMessages.archiveId)
     case err instanceof UploadJobCreatorError:
       return new UploaderError(`${ErrorMessages.jobCreation}. ${err.message}`)
+    case err instanceof VaultCreatorCreationError:
+      return new UploaderError(`${ErrorMessages.vaultCreation}. ${err.message}`)
+    case err instanceof VaultCreatorDescribeError:
+      return new UploaderError(`${ErrorMessages.vaultDescribe}. ${err.message}`)
     default:
       return new UploaderError(`${ErrorMessages.unknown}. ${err.message}`)
     }

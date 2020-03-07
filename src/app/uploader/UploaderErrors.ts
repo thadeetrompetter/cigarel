@@ -11,6 +11,8 @@ export enum ErrorMessages {
   archiveUpload = "Failed to upload an archive",
   archiveId = "Archive ID is missing",
   jobCreation = "Failed to create upload job",
+  vaultCreation = "Failed to create new vault",
+  vaultDescribe = "Failed to get info for vault",
   unknown = "Uploader unknown error"
 }
 

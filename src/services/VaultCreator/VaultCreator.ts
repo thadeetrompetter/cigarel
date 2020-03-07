@@ -5,7 +5,7 @@ import { AppConfig } from "../../app/config/Config"
 import { ILogger } from "../../helpers/logger/Logger"
 
 export interface IVaultCreator {
-  createVault(name: string): Promise<void>
+  createVault(): Promise<void>
 }
 
 interface VaultParams {
