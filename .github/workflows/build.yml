@@ -22,32 +22,34 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: '12.x'
-    - name: cache node dependencies
-      id: cache-npm
-      uses: actions/cache@v1
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-    - name: install dependencies
-      run: npm ci
-    - name: run unit tests
-      run: npm test
-    - name: lint
-      run: npm run lint
-    - name: create artifact
-      if: github.event_name == 'release'
-      run: >
-        npm run pkg
-        && zip -j artifact-darwin.zip bin/cigarel
-    - name: upload artifact
-      if: github.event_name == 'release'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.url }}/assets
-        asset_path: ./artifact-darwin.zip
-        asset_name: cigarel-darwin-${{ github.event.tag_name }}.zip
-        asset_content_type: application/zip
+    - name: what is this
+      run: echo ${{ github.event }}
+    # - name: cache node dependencies
+    #   id: cache-npm
+    #   uses: actions/cache@v1
+    #   with:
+    #     path: ~/.npm
+    #     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-node-
+    # - name: install dependencies
+    #   run: npm ci
+    # - name: run unit tests
+    #   run: npm test
+    # - name: lint
+    #   run: npm run lint
+    # - name: create artifact
+    #   if: github.event_name == 'release'
+    #   run: >
+    #     npm run pkg
+    #     && zip -j artifact-darwin.zip bin/cigarel
+    # - name: upload artifact
+    #   if: github.event_name == 'release'
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ github.event.url }}/assets
+    #     asset_path: ./artifact-darwin.zip
+    #     asset_name: cigarel-darwin-${{ github.event.tag_name }}.zip
+    #     asset_content_type: application/zip
