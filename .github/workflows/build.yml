@@ -31,7 +31,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node-
     - name: install dependencies
-      if: steps.cache-npm.outputs.cache-hit != 'true'
       run: npm ci
     - name: run unit tests
       run: npm test
