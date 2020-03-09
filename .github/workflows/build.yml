@@ -35,7 +35,20 @@ jobs:
       run: npm ci
     - name: run unit tests
       run: npm test
-      if: github.event != 'release'
     - name: lint
       run: npm run lint
-      if: github.event != 'release'
+    - name: create artifact
+      if: github.event_name == 'release'
+      run: >
+        npm run pkg
+        && zip -j artifact-darwin.zip bin/cigarel
+    - name: upload artifact
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.url }}/assets
+        asset_path: ./artifact.zip
+        asset_name: cigarel-darwin-${{ github.event.tag_name }}.zip
+        asset_content_type: application/zip
