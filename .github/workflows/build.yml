@@ -23,7 +23,7 @@ jobs:
       with:
         node-version: '12.x'
     - name: what is this
-      run: echo ${{ github.event }}
+      run: echo ${{ github.event.release.url }}
     # - name: cache node dependencies
     #   id: cache-npm
     #   uses: actions/cache@v1
