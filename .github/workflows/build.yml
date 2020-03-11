@@ -10,22 +10,31 @@ on:
   pull_request:
     branches:
       - master
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: '12.x'
-    - name: install dependencies
-      run: npm ci
+    - uses: bahmutov/npm-install@v1
     - name: run unit tests
       run: npm test
-      if: github.event != 'release'
     - name: lint
       run: npm run lint
-      if: github.event != 'release'
+    - name: create artifact
+      if: github.event_name == 'release'
+      run: >
+        npm run pkg
+        && zip -j artifact-darwin.zip bin/cigarel
+    - name: upload artifact
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./artifact-darwin.zip
+        asset_name: cigarel-darwin-${{ github.event.release.tag_name }}.zip
+        asset_content_type: application/zip
