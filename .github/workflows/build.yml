@@ -11,27 +11,15 @@ on:
   pull_request:
     branches:
       - master
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
         node-version: '12.x'
-    - name: cache node dependencies
-      id: cache-npm
-      uses: actions/cache@v1
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-    - name: install dependencies
-      run: npm ci
+    - uses: bahmutov/npm-install@v1
     - name: run unit tests
       run: npm test
     - name: lint
