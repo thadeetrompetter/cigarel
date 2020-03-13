@@ -15,6 +15,8 @@ import { getLogger, ILogger } from "../helpers/logger/Logger"
 import { Validator, IValidator } from "../app/config/Validator"
 import { GlacierStubUpload } from "../services/GlacierUploader/GlacierStubUpload"
 import { VaultCreator, IVaultCreator } from "../services/VaultCreator/VaultCreator"
+import {Credentials} from "aws-sdk"
+import {ClientConfiguration} from "aws-sdk/clients/glacier"
 
 export class Bootstrap {
   private readonly container: Container
@@ -47,9 +49,18 @@ export class Bootstrap {
     // Glacier AWS service
     this.container.bind<Glacier>(TYPES.Glacier).toDynamicValue(({ container }) => {
       const region = container.get<Config>(TYPES.AppConfig).region
-      container.get<ILogger>(TYPES.Logger).debug(`set up AWS Glacier for region ${region}`)
+      const logger = container.get<ILogger>(TYPES.Logger)
 
-      return new Glacier({ apiVersion: "2012-06-01", region })
+      logger.debug(`set up AWS Glacier for region ${region}`)
+
+      const params: ClientConfiguration = { apiVersion: "2012-06-01", region }
+      const creds = this.getAWSCredentials()
+      if (creds) {
+        logger.debug("Using user-provided AWS credentials")
+        params.credentials = creds
+      }
+
+      return new Glacier(params)
     }).inSingletonScope()
 
     // Glacier upload service
@@ -70,5 +81,19 @@ export class Bootstrap {
     this.container.bind<Uploader>(TYPES.Uploader).to(Uploader)
 
     return this.container
+  }
+
+  private getAWSCredentials(): Credentials | null {
+    const { accessKeyId, secretAccessKey, sessionToken } = this.container.get<Config>(TYPES.AppConfig)
+    if (accessKeyId && secretAccessKey) {
+      const creds = new Credentials(accessKeyId, secretAccessKey)
+      if (sessionToken) {
+        creds.sessionToken = sessionToken
+      }
+
+      return creds
+    }
+
+    return null
   }
 }
