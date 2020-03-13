@@ -21,6 +21,21 @@ yargs
       process.exit(1)
     }
   })
+  .option("access-key-id", {
+    alias: "a",
+    describe: "AWS access key ID",
+    type: "string"
+  })
+  .option("secret-access-key", {
+    alias: "k",
+    describe: "AWS secret access key",
+    type: "string"
+  })
+  .option("session-token", {
+    alias: "t",
+    describe: "AWS session token",
+    type: "string"
+  })
   .option("size", {
     alias: "s",
     describe: "Size of upload parts in MB",

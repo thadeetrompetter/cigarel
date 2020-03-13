@@ -30,6 +30,9 @@ export interface AppConfig {
   dryRun: boolean
   logLevel: LogLevel
   region: Region
+  accessKeyId?: string
+  secretAccessKey?: string
+  sessionToken?: string
   description?: string
 }
 
@@ -55,6 +58,9 @@ export class Config implements AppConfig {
   public readonly description?: string
   public readonly logLevel: LogLevel
   public readonly region: Region
+  public readonly accessKeyId?: string
+  public readonly secretAccessKey?: string
+  public readonly sessionToken?: string
   private readonly maxChunkSize = this.defaultChunkSize * 1024 * 4
   private readonly validator: IValidator
 
@@ -72,6 +78,9 @@ export class Config implements AppConfig {
     this.logLevel = config.logLevel || Config.logLevel
     this.region = config.region || Config.region
     this.dryRun = config.dryRun ?? Config.dryRun
+    this.accessKeyId = config.accessKeyId
+    this.secretAccessKey = config.secretAccessKey
+    this.sessionToken = config.sessionToken
 
     const { description } = config
 
