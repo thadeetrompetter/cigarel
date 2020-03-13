@@ -68,7 +68,10 @@ export class Validator implements IValidator {
       logLevel: { enum: ["error", "warn", "info", "verbose", "debug", "silly"] },
       vaultName: { type: "string", minLength: 1 },
       dryRun: { type: "boolean" },
-      region: { enum: Validator.regions }
+      region: { enum: Validator.regions },
+      accessKeyId: { type: "string", minLength: 21, maxLength: 21 },
+      secretAccessKey: { type: "string", minLength: 41, maxLength: 41 },
+      sessionToken: { type: "string" }
     }
   }
 }
